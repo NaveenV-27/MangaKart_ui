@@ -24,3 +24,37 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.bgimg {
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  /* Remove background-image from here */
+}
+
+.bgimg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("../public/bg/bgImg1.jpeg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.2; /* Adjust for desired opacity */
+  z-index: 0;
+}
+
+.bgimg > * {
+  position: relative;
+  z-index: 1;
+}
+
+
+
+@layer components {
+  .flex-center {
+    @apply flex justify-center items-center;
+  }
+  
+}
