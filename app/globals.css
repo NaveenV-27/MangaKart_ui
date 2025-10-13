@@ -50,6 +50,30 @@ body {
   z-index: 1;
 }
 
+.custom-scrollbar {
+  scrollbar-width: thin; /* For Firefox */
+  scrollbar-color: #555 #333; /* For Firefox: thumb color, track color */
+}
+
+/* For WebKit browsers (Chrome, Safari, Edge) */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px; /* Set the width of the scrollbar */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #1b2531; /* Set the background color of the track */
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #4a5568; /* Set the color of the thumb */
+  border-radius: 10px;
+  border: 2px solid #1b2531; /* Add a small border for separation */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #718096; /* Color on hover */
+}
 
 
 @layer components {
