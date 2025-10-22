@@ -7,6 +7,7 @@ import { FaTrash, FaPlus, FaMinus } from 'react-icons/fa';
 
 interface CartItem {
   _id: string;
+  type?: string;
   title: string;
   cover_image: string;
   price: number;
@@ -17,44 +18,21 @@ const CartPage = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isMounted, setIsMounted] = useState(false);
 
-  const items : CartItem[] = [
-    {
-      "_id": "68cbd933ce78b50885047575",
-      "title": "One Piece",
-      "cover_image": "https://res.cloudinary.com/mangakart/image/upload/v1758189872/uploads/sxevyu3z8w7rb3vfsudp.avif",
-      "price": 10.99,
-      "quantity": 2
-    },
-    {
-      "_id": "68bc02eaf3720f9c43927760",
-      "title": "Chainsaw Man",
-      "cover_image": "https://imgsrv.crunchyroll.com/cdn-cgi/image/fit=contain,format=auto,quality=85,width=1000,height=675/catalog/crunchyroll/706a725cc02cd7b50c6cbbd5444be3e9.jpg",
-      "price": 12.50,
-      "quantity": 1
-    },
-    {
-      "_id": "68cbdb86ce78b50885047579",
-      "title": "Dragon Ball",
-      "cover_image": "https://res.cloudinary.com/mangakart/image/upload/v1758190467/uploads/wsnmtkqbbdnmmlkcgqc0.avif",
-      "price": 9.99,
-      "quantity": 3
-    }
-  ];
 
   useEffect(() => {
     setIsMounted(true);
-    // // Load cart from localStorage on initial mount
-    // const storedCart = localStorage.getItem('mangaCart');
-    // if (storedCart) {
-    //   setCartItems(JSON.parse(storedCart));
-    // }
-    setCartItems(items);
+    // Load cart from localStorage on initial mount
+    const storedCart = localStorage.getItem('cart');
+    console.log(storedCart)
+    if (storedCart) {
+      setCartItems(JSON.parse(storedCart));
+    }
   }, []);
 
   useEffect(() => {
     // Save cart to localStorage whenever it changes
     if (isMounted) {
-      localStorage.setItem('mangaCart', JSON.stringify(cartItems));
+      localStorage.setItem('cart', JSON.stringify(cartItems));
     }
   }, [cartItems, isMounted]);
 
@@ -113,7 +91,7 @@ const CartPage = () => {
                 <div className='flex-1 flex flex-col sm:flex-row justify-between items-center w-full space-y-2 sm:space-y-0'>
                   <div className='flex-1 text-center sm:text-left'>
                     <h2 className='text-lg font-semibold text-white'>{item.title}</h2>
-                    <p className='text-gray-400'>${item.price.toFixed(2)}</p>
+                    <p className='text-gray-400'>₹{item.price.toFixed(2)}</p>
                   </div>
                   <div className='flex items-center space-x-4'>
                     <div className='flex-center space-x-2 bg-gray-700 rounded-full px-2 py-1'>
@@ -142,7 +120,7 @@ const CartPage = () => {
                     </button>
                   </div>
                   <div className='sm:ml-4 text-center sm:text-right w-full sm:w-auto mt-2 sm:mt-0'>
-                    <p className='text-lg font-bold text-white'>${(item.price * item.quantity).toFixed(2)}</p>
+                    <p className='text-lg font-bold text-white'>₹{(item.price * item.quantity).toFixed(2)}</p>
                   </div>
                 </div>
               </div>
@@ -155,16 +133,16 @@ const CartPage = () => {
               <h2 className='text-2xl font-bold text-white'>Order Summary</h2>
               <div className='flex justify-between text-gray-400'>
                 <span>Subtotal:</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span>₹{subtotal.toFixed(2)}</span>
               </div>
               <div className='flex justify-between text-gray-400'>
                 <span>Shipping:</span>
-                <span>${shipping.toFixed(2)}</span>
+                <span>₹{shipping.toFixed(2)}</span>
               </div>
               <div className='border-t border-gray-600 my-4'></div>
               <div className='flex justify-between text-xl font-bold text-white'>
                 <span>Total:</span>
-                <span>${total.toFixed(2)}</span>
+                <span>₹{total.toFixed(2)}</span>
               </div>
               <button className='w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold'>
                 Proceed to Checkout

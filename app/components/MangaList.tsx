@@ -59,7 +59,7 @@ const MangaList = () => {
       <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12 gap-y-8'>
         {mangaList.length > 0 ? (
           mangaList.map((manga, idx) => (
-            <div key={manga._id || idx} className="bg-[#232a32] rounded-lg overflow-hidden shadow-lg transition-transform duration-300 hover:scale-105">
+            <div key={manga._id || idx} className="bg-[#232a32] rounded-lg truncate shadow-lg transition-transform duration-300 hover:scale-105">
               <Link
                 href={`/manga/${manga.title.replace(/ /g, "-")}`}
                 className="block"
@@ -78,7 +78,7 @@ const MangaList = () => {
                   <h3 className='text-lg font-bold text-white truncate'>
                     {manga.title}
                   </h3>
-                  <p className='text-sm text-gray-400 mt-1 truncate'>
+                  <p className='text-sm text-gray-400 truncate'>
                     By: {manga.authors && manga.authors.join(", ")}
                   </p>
                   <div className='flex items-center mt-2'>

@@ -15,6 +15,7 @@ const AddVolume = () => {
   const [mangaQuery, setMangaQuery] = useState('');
   const [mangaResults, setMangaResults] = useState<MangaTitle[]>([]);
   const [selectedManga, setSelectedManga] = useState<MangaTitle | null>(null);
+  const [showResults, setShowResults] = useState(false);
 
   const [volumeNumber, setVolumeNumber] = useState('');
   const [volumeTitle, setVolumeTitle] = useState('');
@@ -61,6 +62,7 @@ const AddVolume = () => {
     setSelectedManga(manga);
     setMangaQuery(manga.title);
     setMangaResults([]);
+    setShowResults(false);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,7 +104,7 @@ const AddVolume = () => {
 
     try {
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/api/manga/create_volume`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/volumes/create_volume`,
         formData,
         {
           headers: {
@@ -151,6 +153,7 @@ const AddVolume = () => {
                 value={selectedManga ? selectedManga.title : mangaQuery}
                 onChange={(e) => {
                   setMangaQuery(e.target.value);
+                  setShowResults(true);
                   setSelectedManga(null);
                 }}
                 className="mt-1 block w-full p-2 pr-10 rounded bg-gray-700 border border-gray-600 text-gray-300 focus:ring-blue-500 focus:border-blue-500"
@@ -166,7 +169,7 @@ const AddVolume = () => {
                 Searching...
             </div>
           )}
-          {mangaResults.length > 0 && (
+          {showResults && mangaResults.length > 0 && (
             <div className="absolute z-10 w-full max-w-lg bg-gray-700 rounded-md shadow-lg mt-1 max-h-60 overflow-y-auto">
               {mangaResults.map((manga) => (
                 <div

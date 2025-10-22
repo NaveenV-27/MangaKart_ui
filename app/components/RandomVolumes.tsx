@@ -26,8 +26,8 @@ const RandomVolumes = () => {
   useEffect(() => {
     const fetchRandomVolumes = async () => {
       try {
-        const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/manga/get_random_volumes`, {
-          limit: 3, // Requesting 3 volumes as specified
+        const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/volumes/get_random_volumes`, {
+          limit: 10, // Requesting 3 volumes as specified
         });
         // Set the state directly with the array from the API response
         setVolumeList(response.data.volumes); 
@@ -62,7 +62,7 @@ const RandomVolumes = () => {
       <h2 className='text-3xl font-bold mb-6 text-white'>Featured Volumes</h2>
       
       {volumeList.length > 0 ? (
-        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
+        <div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6'>
           {volumeList.map((volume) => (
             <div
               key={volume.volume_id}
@@ -90,7 +90,7 @@ const RandomVolumes = () => {
                     Vol. {volume.volume_number}
                   </p>
                   <p className='text-md font-semibold text-green-400 mt-2'>
-                    ${volume.price.toFixed(2)}
+                    ₹{volume.price.toFixed(2)}
                   </p>
                 </div>
 
