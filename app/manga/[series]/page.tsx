@@ -18,9 +18,22 @@ interface MangaData {
   rating: number;
 }
 
+interface VolumeData {
+  // _id: string;
+  // manga_id: string;
+  volume_id: string; 
+  volume_title: string;
+  // description: string; 
+  cover_image: string;
+  volume_number: number;
+  price: number;
+  // stock: number;
+}
+
 const page = () => {
   const params = useParams();
   const [mangaData, setMangaData] = useState<MangaData | null>(null);
+  const [volumes, setVolumes] = useState<VolumeData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,6 +58,27 @@ const page = () => {
         setIsLoading(false);
       }
     };
+    const fetchMangaVolumes = async () => {
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        if (mangaName) { 
+          const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/volumes/get_volumes_by_manga`, {
+            manga_id: mangaData?.manga_id,
+          });
+          if(response.data.success == 1) {
+            setVolumes(response.data)
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching manga details:", err);
+        setError("Failed to load manga details. Please check the URL.");
+      } finally {
+        setIsLoading(false);
+      }
+      
+    }
 
     fetchMangaDetails();
   }, [mangaName]);
@@ -141,6 +175,9 @@ const page = () => {
             </div>
           </div>
         )}
+      </div>
+      <div className='flex-center gap-4'>
+          {volumes && volumes.length > 0 ? "" : ""}
       </div>
     </div>
   );

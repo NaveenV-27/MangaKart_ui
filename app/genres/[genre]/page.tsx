@@ -11,11 +11,12 @@ const GenrePage = () => {
 
   useEffect(() => {
     const fetchGenreManga = async () => {
-      console.log("Fetching Genre... ", genre)
+      const genreReq = genre.replace("-", " ");
+      console.log("Fetching Genre... ", genreReq)
       try {
         if (genre) { // Check if genre is available
           const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/manga/find_manga_by_genre`, {
-            genre,
+            genre : genreReq,
           });
           console.log("Response from API:", response.data)
           setMangaList(response.data);

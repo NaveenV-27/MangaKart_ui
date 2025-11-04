@@ -8,14 +8,13 @@ import { ShoppingCart } from 'lucide-react'; // Using ShoppingCart icon for Buy/
 interface VolumeProps {
   _id: string;
   manga_id: string;
-  volume_id: string; // Added volume_id from response
+  volume_id: string; 
   volume_title: string;
-  description: string; // Added description for display
+  description: string; 
   cover_image: string;
   volume_number: number;
   price: number;
   stock: number;
-  // Note: 'authors' is not in the response, so I removed it from the interface/display
 }
 
 const RandomVolumes = () => {
@@ -27,7 +26,7 @@ const RandomVolumes = () => {
     const fetchRandomVolumes = async () => {
       try {
         const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/volumes/get_random_volumes`, {
-          limit: 10, // Requesting 3 volumes as specified
+          limit: 10, // Requesting 10 volumes
         });
         // Set the state directly with the array from the API response
         setVolumeList(response.data.volumes); 
@@ -43,7 +42,7 @@ const RandomVolumes = () => {
 
   if (isLoading) {
     return (
-      <div className="flex-center h-48 text-gray-400 text-xl">
+      <div className="flex justify-center items-center h-48 text-gray-400 text-xl">
         Loading Featured Volumes...
       </div>
     );
@@ -51,22 +50,24 @@ const RandomVolumes = () => {
 
   if (error) {
     return (
-      <div className="flex-center h-48 text-red-400 text-lg">
+      <div className="flex justify-center items-center h-48 text-red-400 text-lg">
         {error}
       </div>
     );
   }
 
   return (
-    <div className='p-6 md:p-10'>
-      <h2 className='text-3xl font-bold mb-6 text-white'>Featured Volumes</h2>
+    <div className='p-6 md:p-10 max-w-[98vw] overflow-hidden '>
+      <h2 className='text-3xl font-bold mb-6 text-white w-full lg:ml-40'>Featured Volumes</h2>
       
       {volumeList.length > 0 ? (
-        <div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6'>
+        // === CHANGES FOR HORIZONTAL SCROLLING START HERE ===
+        <div className='flex overflow-x-scroll space-x-6 pb-4 scrollbar lg:max-w-3/4 lg:mx-40'>
           {volumeList.map((volume) => (
             <div
               key={volume.volume_id}
-              className="bg-[#232a32] rounded-lg overflow-hidden shadow-xl transition-transform duration-300 hover:scale-[1.03] flex flex-col"
+              // Set a fixed width for the item and ensure it doesn't shrink
+              className="bg-[#232a32] rounded-lg overflow-hidden shadow-xl transition-transform duration-300 hover:scale-[1.03] flex flex-col w-[180px] sm:w-[200px] flex-shrink-0"
             >
               {/* Volume Cover */}
               <Link href={`/volume/${volume.volume_id}`} className="relative w-full aspect-[3/4] block flex-shrink-0">
@@ -75,7 +76,7 @@ const RandomVolumes = () => {
                   alt={`${volume.volume_title} Volume ${volume.volume_number}`}
                   fill
                   style={{ objectFit: 'cover' }}
-                  sizes="(max-width: 768px) 100vw, 33vw"
+                  sizes="200px" // Adjusted size for horizontal list item
                   className="rounded-t-lg"
                 />
               </Link>
@@ -95,25 +96,26 @@ const RandomVolumes = () => {
                 </div>
 
                 <p className='text-xs text-gray-500 mt-2'>
-                    {volume.stock > 0 ? `${volume.stock} in stock` : 'Out of Stock'}
+                  {volume.stock > 0 ? `${volume.stock} in stock` : 'Out of Stock'}
                 </p>
 
                 {/* Action Button */}
                 <div className="mt-4">
-                    <Link
-                        href={`/checkout/${volume.volume_id}`}
-                        className='flex-center w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-500'
-                        aria-disabled={volume.stock === 0}
-                        onClick={(e) => { if (volume.stock === 0) e.preventDefault(); }}
-                    >
-                        <ShoppingCart size={18} className='mr-2' />
-                        {volume.stock > 0 ? 'Buy Now' : 'Notify Me'}
-                    </Link>
+                  <Link
+                    href={`/checkout/${volume.volume_id}`}
+                    className='flex justify-center items-center w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-500'
+                    aria-disabled={volume.stock === 0}
+                    onClick={(e) => { if (volume.stock === 0) e.preventDefault(); }}
+                  >
+                    <ShoppingCart size={18} className='mr-2' />
+                    {volume.stock > 0 ? 'Buy Now' : 'Notify Me'}
+                  </Link>
                 </div>
               </div>
             </div>
           ))}
         </div>
+        // === CHANGES FOR HORIZONTAL SCROLLING END HERE ===
       ) : (
         <p className="text-center text-gray-400 text-lg">
           No featured volumes available right now.

@@ -28,7 +28,7 @@ const VolumeDetailsPage = () => {
   const [volumeData, setVolumeData] = useState<VolumeData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(0);
   const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
 
   // --- Utility: Get current cart quantity for initial state ---

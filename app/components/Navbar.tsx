@@ -22,11 +22,12 @@ interface MangaResult {
 
 const Navbar = () => {
   const router = useRouter();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isMounted, setIsMounted] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [searchFocused, setSearchFocused] = useState<boolean>(false);
+  const [isMounted, setIsMounted] = useState<boolean>(false);
+  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const [searchResults, setSearchResults] = useState<MangaResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
+  const [isSearching, setIsSearching] = useState<boolean>(true);
 
   useEffect(() => {
     setIsMounted(true);
@@ -112,15 +113,17 @@ const Navbar = () => {
             className='w-full border-2 border-white focus:outline-none px-3 h-full rounded-l-2xl p-2' 
             value={searchTerm}
             onChange={handleChange}
+            onFocus={() => setSearchFocused(true)}
+            // onBlur={() => setSearchFocused(false)}
             onKeyPress={handleKeyPress}
           />
-          {isSearching && (
-            <div className="absolute top-10 left-0 mt-1 w-full bg-gray-800 rounded-b-md shadow-lg text-gray-400 p-2 text-sm z-50">
+          {searchFocused && isSearching && (
+            <div className="absolute top-10 left-0 mt-1 w-full bg-gray-800 rounded-b-md shadow-lg text-gray-400 p-2 text-lg z-50 flex-center">
               Searching...
             </div>
           )}
-          {searchResults.length > 0 && (
-            <div className="absolute top-10 left-0 mt-1 w-full max-h-60 overflow-y-auto bg-gray-800 rounded-b-md shadow-lg z-50">
+          {searchFocused && searchResults.length > 0 && (
+            <div className="absolute top-10 left-0 mt-1 w-full max-h-60 overflow-y-auto bg-gray-800 rounded-b-md shadow-lg z-50 scrollbar">
               {searchResults.map((manga) => (
                 <div
                   key={manga._id}
@@ -165,7 +168,7 @@ const Navbar = () => {
           </Link>
           <li className='cursor-pointer hover:scale-110 hover:text-white transition-all'>Contact</li>
           <li className='cursor-pointer hover:scale-110 hover:text-white transition-all flex-center '>
-            <p className='pl-2 pr-1 rounded-l-3xl bg-gray-700 text-sm'>Naveen</p>
+            <p className='pl-2 pr-1 rounded-l-3xl bg-gray-700 text-sm hidden group-hover:flex'>Naveen</p>
             <CgProfile className='size-6' />
           </li>
           <li className='cursor-pointer hover:scale-110 hover:text-white transition-all'>

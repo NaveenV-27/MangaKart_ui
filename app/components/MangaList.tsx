@@ -74,7 +74,7 @@ const MangaList = () => {
                     className="rounded-t-lg"
                   />
                 </div>
-                <div className="p-4">
+                <div className="px-4 py-2">
                   <h3 className='text-lg font-bold text-white truncate'>
                     {manga.title}
                   </h3>
