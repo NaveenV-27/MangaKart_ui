@@ -25,8 +25,7 @@ const RandomVolumes = () => {
   useEffect(() => {
     const fetchRandomVolumes = async () => {
       try {
-        const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/volumes/get_random_volumes`, {
-          limit: 10, // Requesting 10 volumes
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URL}/api/volumes/get_random_volumes`, {
         });
         // Set the state directly with the array from the API response
         setVolumeList(response.data.volumes); 

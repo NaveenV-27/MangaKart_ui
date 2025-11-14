@@ -4,6 +4,8 @@ import Footer from "./components/Footer";
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from "react";
 import "./globals.css";
+import { Provider } from "react-redux";
+import { store } from "./redux/store/store";
 
 export default function ConditionalLayout({
   children,
@@ -22,11 +24,14 @@ export default function ConditionalLayout({
   // const isRecAuthPage = pathname === "/ReceptionistAuth/login";
   return (
       <div>
+        <Provider store={store}>
+
         {!isAuthPage && <NavBar/>}
         <div className={`min-h-[80vh] ${isAuthPage ? "" : "bgimg"}`}>
           {children}
         </div>
         {!isAuthPage && <Footer/>}
+          </Provider>
         
       </div>
   );

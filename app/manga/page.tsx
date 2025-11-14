@@ -1,14 +1,14 @@
-"use client"
-import React from 'react'
-import { useSearchParams } from 'next/navigation'
+"use client";
+import React from 'react';
+import FiltersSideBar from '../components/FiltersSideBar';
 
 const page = () => {
-    const searchParams = useSearchParams()
-    const manga = searchParams.get('mangaID')
-    console.log(manga)
     return (
-        <div className='flex-center text-2xl font-bold py-10'>
-            Manga page {manga}
+        <div className='h-full flex'>
+            <FiltersSideBar/>
+            <div className='flex-center text-2xl font-bold py-10 w-full'>
+                Browse some of the most popular series' out there
+            </div>
         </div>
     )
 }

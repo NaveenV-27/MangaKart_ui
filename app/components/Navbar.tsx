@@ -10,6 +10,9 @@ import { IoSearch } from "react-icons/io5";
 import { FaShoppingCart } from "react-icons/fa";
 import { Menu, X, Star } from 'lucide-react';
 import axios from 'axios';
+import { useSelector } from 'react-redux';
+import { RootState } from '../redux/store/store';
+// import {addToCart,decrementQuantity,removeItem, clearCart } from '../redux/slices/cartSlice';
 
 interface MangaResult {
   _id: string;
@@ -28,6 +31,8 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const [searchResults, setSearchResults] = useState<MangaResult[]>([]);
   const [isSearching, setIsSearching] = useState<boolean>(true);
+
+  const count = useSelector((state: RootState) => state.cart.totalCount)
 
   useEffect(() => {
     setIsMounted(true);
@@ -114,8 +119,8 @@ const Navbar = () => {
             value={searchTerm}
             onChange={handleChange}
             onFocus={() => setSearchFocused(true)}
-            // onBlur={() => setSearchFocused(false)}
-            onKeyPress={handleKeyPress}
+            onBlur={() => setSearchFocused(false)}
+            onKeyDown={handleKeyPress}
           />
           {searchFocused && isSearching && (
             <div className="absolute top-10 left-0 mt-1 w-full bg-gray-800 rounded-b-md shadow-lg text-gray-400 p-2 text-lg z-50 flex-center">
@@ -127,7 +132,7 @@ const Navbar = () => {
               {searchResults.map((manga) => (
                 <div
                   key={manga._id}
-                  onClick={() => handleResultClick(manga.title)}
+                  onMouseDown={() => handleResultClick(manga.title)}
                   className="p-3 flex items-center space-x-4 cursor-pointer hover:bg-gray-700 transition-colors text-white"
                 >
                   <div className="relative w-12 h-12 flex-shrink-0">
@@ -171,10 +176,13 @@ const Navbar = () => {
             <p className='pl-2 pr-1 rounded-l-3xl bg-gray-700 text-sm hidden group-hover:flex'>Naveen</p>
             <CgProfile className='size-6' />
           </li>
-          <li className='cursor-pointer hover:scale-110 hover:text-white transition-all'>
+          <li className='cursor-pointer hover:scale-110 hover:text-white transition-all flex-center relative'>
             <Link href="/cart">
               <FaShoppingCart className='size-6' />
             </Link>
+            <p className='bg-red-500 rounded-4xl flex-center h-4 w-3 text-sm absolute left-4 bottom-3'>
+              {isMounted ? count : 0}
+            </p>
           </li>
         </ul>
       </div>

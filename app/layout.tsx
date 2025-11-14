@@ -29,9 +29,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <div className="min-h-[80vh]">
-          <ConditionalLayout>
-            {children}
-          </ConditionalLayout>
+            <ConditionalLayout>
+              {children}
+            </ConditionalLayout>
         </div>
         
       </body>

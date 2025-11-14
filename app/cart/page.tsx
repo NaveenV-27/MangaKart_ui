@@ -1,61 +1,52 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { FaTrash, FaPlus, FaMinus } from 'react-icons/fa';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../redux/store/store';
+import { 
+    addToCart, 
+    decrementQuantity, 
+    removeItem,
+    // clearCart 
+} from '../redux/slices/cartSlice';
 
-interface CartItem {
-  _id: string;
-  type?: string;
-  title: string;
-  cover_image: string;
-  price: number;
-  quantity: number;
-}
 
 const CartPage = () => {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [isMounted, setIsMounted] = useState(false);
+  // 1. Read data from Redux store
+  const cartItems = useSelector((state: RootState) => state.cart.cartItems);
+  // const totalCount = useSelector((state: RootState) => state.cart.totalCount);
+  const dispatch = useDispatch();
 
-
-  useEffect(() => {
-    setIsMounted(true);
-    // Load cart from localStorage on initial mount
-    const storedCart = localStorage.getItem('cart');
-    console.log(storedCart)
-    if (storedCart) {
-      setCartItems(JSON.parse(storedCart));
-    }
-  }, []);
-
-  useEffect(() => {
-    // Save cart to localStorage whenever it changes
-    if (isMounted) {
-      localStorage.setItem('cart', JSON.stringify(cartItems));
-    }
-  }, [cartItems, isMounted]);
-
-  const updateQuantity = (id: string, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      setCartItems(cartItems.filter(item => item._id !== id));
-    } else {
-      setCartItems(
-        cartItems.map(item =>
-          item._id === id ? { ...item, quantity: newQuantity } : item
-        )
-      );
-    }
+  const handleIncrement = (item: typeof cartItems[0]) => {
+    const itemData = {
+        _id: item._id,
+        title: item.title,
+        cover_image: item.cover_image,
+        price: item.price,
+        type: item.type,
+    };
+    dispatch(addToCart(itemData));
   };
 
-  const removeItem = (id: string) => {
-    setCartItems(cartItems.filter(item => item._id !== id));
+  const handleDecrement = (id: string) => {
+    dispatch(decrementQuantity(id));
   };
 
-  const subtotal = cartItems.reduce(
-    (acc, item) => acc + item.price * item.quantity,
-    0
-  );
+  const handleRemoveItem = (id: string) => {
+    dispatch(removeItem(id));
+  };
+
+  // const subtotal = cartItems.reduce(
+  //   (acc, item) => acc + item.price * item.quantity,
+  //   0
+  // );
+  
+  // You can also get subtotal directly from the store if you want:
+  const subtotal = useSelector((state: RootState) => state.cart.totalAmount);
+
   const shipping = subtotal > 0 ? 5.00 : 0;
   const total = subtotal + shipping;
 
@@ -63,8 +54,8 @@ const CartPage = () => {
     <div className='container mx-auto p-4 md:p-8 min-h-[79vh] text-gray-300'>
       <h1 className='text-3xl md:text-4xl font-bold text-center mb-8 text-white'>Your Cart</h1>
 
-      {cartItems.length === 0 ? (
-        <div className='flex-center flex-col h-64 text-center'>
+      {cartItems?.length === 0 ? (
+        <div className='flex flex-col items-center justify-center h-64 text-center'>
           <p className='text-xl text-gray-400'>Your cart is empty.</p>
           <Link href="/genres" className='mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'>
             Browse Manga
@@ -74,7 +65,7 @@ const CartPage = () => {
         <div className='flex flex-col lg:flex-row lg:space-x-8'>
           {/* Cart Items List */}
           <div className='flex-1 lg:w-2/3 space-y-4'>
-            {cartItems.map(item => (
+            {cartItems?.map(item => (
               <div
                 key={item._id}
                 className='flex flex-col sm:flex-row items-center bg-[#1b2531] rounded-lg shadow-lg p-4 space-y-4 sm:space-y-0 sm:space-x-4 transition-transform duration-300 hover:scale-[1.01]'
@@ -91,36 +82,42 @@ const CartPage = () => {
                 <div className='flex-1 flex flex-col sm:flex-row justify-between items-center w-full space-y-2 sm:space-y-0'>
                   <div className='flex-1 text-center sm:text-left'>
                     <h2 className='text-lg font-semibold text-white'>{item.title}</h2>
-                    <p className='text-gray-400'>₹{item.price.toFixed(2)}</p>
+                    <p className='text-gray-400'>₹{item.price?.toFixed(2)}</p>
                   </div>
                   <div className='flex items-center space-x-4'>
-                    <div className='flex-center space-x-2 bg-gray-700 rounded-full px-2 py-1'>
+                    <div className='flex items-center space-x-2 bg-gray-700 rounded-full px-2 py-1'>
                       <button
-                        onClick={() => updateQuantity(item._id, item.quantity - 1)}
+                        // Decrease quantity: dispatch decrementQuantity
+                        onClick={() => handleDecrement(item._id)}
                         className='text-gray-300 hover:text-white transition-colors'
                         aria-label="Decrease quantity"
                       >
-                        <FaMinus size={12} />
+                        {/* If quantity is 1, show trash icon */}
+                        {item.quantity <= 1 ? <FaTrash size={12} /> : <FaMinus size={12} />}
                       </button>
                       <span className='font-bold text-white'>{item.quantity}</span>
                       <button
-                        onClick={() => updateQuantity(item._id, item.quantity + 1)}
+                        // Increase quantity: dispatch handleIncrement (which uses addToCart)
+                        onClick={() => handleIncrement(item)}
                         className='text-gray-300 hover:text-white transition-colors'
                         aria-label="Increase quantity"
                       >
                         <FaPlus size={12} />
                       </button>
                     </div>
-                    <button
-                      onClick={() => removeItem(item._id)}
-                      className='text-red-400 hover:text-red-500 transition-colors'
-                      aria-label="Remove item"
-                    >
-                      <FaTrash size={20} />
-                    </button>
+                    {/* Explicit Remove Button (Optional, but good UX) */}
+                    {item.quantity > 1 && (
+                      <button
+                        onClick={() => handleRemoveItem(item._id)}
+                        className='text-red-400 hover:text-red-500 transition-colors cursor-pointer'
+                        aria-label="Remove item"
+                      >
+                        <FaTrash size={20} />
+                      </button>
+                    )}
                   </div>
                   <div className='sm:ml-4 text-center sm:text-right w-full sm:w-auto mt-2 sm:mt-0'>
-                    <p className='text-lg font-bold text-white'>₹{(item.price * item.quantity).toFixed(2)}</p>
+                    <p className='text-lg font-bold text-white'>₹{(item.price * item.quantity)?.toFixed(2)}</p>
                   </div>
                 </div>
               </div>
@@ -133,16 +130,16 @@ const CartPage = () => {
               <h2 className='text-2xl font-bold text-white'>Order Summary</h2>
               <div className='flex justify-between text-gray-400'>
                 <span>Subtotal:</span>
-                <span>₹{subtotal.toFixed(2)}</span>
+                <span>₹{subtotal?.toFixed(2)}</span>
               </div>
               <div className='flex justify-between text-gray-400'>
                 <span>Shipping:</span>
-                <span>₹{shipping.toFixed(2)}</span>
+                <span>₹{shipping?.toFixed(2)}</span>
               </div>
               <div className='border-t border-gray-600 my-4'></div>
               <div className='flex justify-between text-xl font-bold text-white'>
                 <span>Total:</span>
-                <span>₹{total.toFixed(2)}</span>
+                <span>₹{total?.toFixed(2)}</span>
               </div>
               <button className='w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold'>
                 Proceed to Checkout
