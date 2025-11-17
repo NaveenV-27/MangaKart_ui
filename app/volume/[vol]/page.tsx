@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { ShoppingCart, Package, Trash, Minus, Plus, Loader2 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../redux/store/store';
-import { addToCart, decrementQuantity, removeItem, clearCart } from '../../redux/slices/cartSlice';
+  import { addToCart, decrementQuantity, removeItem } from '../../redux/slices/cartSlice';
 
 // --- Interfaces (Kept as is) ---
 interface VolumeData {
@@ -35,7 +35,12 @@ const VolumeDetailsPage = () => {
   const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
   const dispatch = useDispatch();
 
-  const currentCartItems = useSelector((state: RootState) => state.cart.cartItems);
+  const cartState = useSelector((state: RootState) => state.cart);
+  
+  // 🎯 FIX: Check if cartState is defined (not undefined)
+  const currentCartItems = cartState?.cartItems || [];
+
+  // const currentCartItems = useSelector((state: RootState) => state.cart.cartItems);
 
   const getInitialQuantity = useCallback((id: string) => {
     // Use the Redux cart state to find the item
@@ -71,7 +76,7 @@ const VolumeDetailsPage = () => {
     };
 
     fetchVolumeDetails();
-  }, [volumeId]);
+  }, [volumeId, getInitialQuantity]);
 
   // --- Cart and Order Handlers ---
 

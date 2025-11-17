@@ -3,7 +3,7 @@ import axios from 'axios';
 import React, { useState, useEffect } from 'react';
 import Image from "next/image";
 import Link from 'next/link';
-import { ChevronDown, LucideArrowUpRight, Star } from 'lucide-react';
+import { LucideArrowUpRight, Star } from 'lucide-react';
 
 interface MangaProps {
   _id: string;
@@ -57,7 +57,7 @@ const MangaList = () => {
     <div className='p-6 md:p-10 mt-2 rounded-2xl bg-black/20'
     //  style={{"backgroundColor" : "rgba(9,0,9,0.2)"}}
       >
-      <h2 className='text-3xl font-bold mb-6 text-white'>Some Popular Series'</h2>
+      <h2 className='text-3xl font-bold mb-6 text-white'>Some Popular Series</h2>
       <div className='flex flex-col w-full'>
         {mangaList.length > 0 ? (
           <>

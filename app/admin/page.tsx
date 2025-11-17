@@ -1,13 +1,13 @@
 "use client"
 
-import axios from 'axios';
+// import axios from 'axios';
 import Link from 'next/link';
-import React, { useState } from 'react'
+import React from 'react'
 
 const page = () => {
 
-  const [uploading, setUploading] = useState(false);
-  const [message, setMessage] = useState('');
+  // const [uploading, setUploading] = useState(false);
+  // const [message, setMessage] = useState('');
 
   return (
     <div>

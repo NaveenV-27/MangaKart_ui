@@ -16,7 +16,11 @@ import {
 
 const CartPage = () => {
   // 1. Read data from Redux store
-  const cartItems = useSelector((state: RootState) => state.cart.cartItems);
+  const cartState = useSelector((state: RootState) => state.cart);
+
+  // 🎯 FIX: Check if cartState is defined (not undefined)
+  const cartItems = cartState?.cartItems || [];
+  const subtotal = cartState?.totalAmount || 0;
   // const totalCount = useSelector((state: RootState) => state.cart.totalCount);
   const dispatch = useDispatch();
 
@@ -39,13 +43,6 @@ const CartPage = () => {
     dispatch(removeItem(id));
   };
 
-  // const subtotal = cartItems.reduce(
-  //   (acc, item) => acc + item.price * item.quantity,
-  //   0
-  // );
-  
-  // You can also get subtotal directly from the store if you want:
-  const subtotal = useSelector((state: RootState) => state.cart.totalAmount);
 
   const shipping = subtotal > 0 ? 5.00 : 0;
   const total = subtotal + shipping;

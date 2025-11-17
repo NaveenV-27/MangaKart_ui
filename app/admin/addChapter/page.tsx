@@ -17,8 +17,6 @@ const AddChapter = () => {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const router = useRouter();
-
   useEffect(() => {
     const fetchMangaTitles = async () => {
       try {
@@ -65,6 +63,7 @@ const AddChapter = () => {
           },
         }
       );
+      console.log("Response", response.data);
       setMessage(`Chapter ${chapterNumber} uploaded successfully!`);
       setChapterNumber('');
       setChapterImages([]);

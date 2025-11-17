@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { User, Lock, Eye, EyeOff, UserCheck2, Mail } from 'lucide-react';
+import { User, Lock, Eye, EyeOff, UserCheck2 } from 'lucide-react';
 
 const LoginPage = () => {
   const router = useRouter();
@@ -65,7 +65,7 @@ const LoginPage = () => {
         setError(response.data.message || "Invalid cridentials");
       }
       
-
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       const apiError = err.response?.data?.message || "Invalid credentials or server error.";
       setError(apiError);
@@ -151,7 +151,7 @@ const LoginPage = () => {
         </form>
 
         <p className="text-sm text-center text-gray-400 mt-6">
-          Don't have an account? 
+          Dont have an account? 
           <Link href="/signup" className="text-blue-400 hover:text-blue-300 font-medium ml-1">
             Sign Up
           </Link>

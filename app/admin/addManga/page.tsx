@@ -23,7 +23,7 @@ const UploadMangaDataForm: React.FC = () => {
     coverImageUrl: '',
   };
   const [formData, setFormData] = useState<MangaData>(initialFormData);
-  const [previewUrl, setPreviewUrl] = useState<any>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>("");
   const [message, setMessage] = useState('');
   
   
@@ -64,7 +64,7 @@ const UploadMangaDataForm: React.FC = () => {
         setPreviewUrl(url);
         console.log(url)
       } else {
-        setPreviewUrl(null);
+        setPreviewUrl("");
       }
     }
   };
@@ -94,7 +94,7 @@ const UploadMangaDataForm: React.FC = () => {
       console.log("Response:", response.data, response.data.data.cover_image);
       setMessage(`Upload successful! URL: ${response.data.data.cover_image}`);
       setFormData(initialFormData);
-      setPreviewUrl(null);
+      setPreviewUrl("");
     } catch (error) {
       console.error('Upload error:', error);
     }

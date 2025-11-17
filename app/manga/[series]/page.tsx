@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import axios from 'axios';
@@ -30,7 +31,7 @@ interface VolumeData {
   // stock: number;
 }
 
-const page = () => {
+const Page = () => {
   const params = useParams();
   const [mangaData, setMangaData] = useState<MangaData | null>(null);
   const [volumes, setVolumes] = useState<VolumeData[]>([]);
@@ -58,27 +59,27 @@ const page = () => {
         setIsLoading(false);
       }
     };
-    const fetchMangaVolumes = async () => {
-      setIsLoading(true);
-      setError(null);
+    // const fetchMangaVolumes = async () => {
+    //   setIsLoading(true);
+    //   setError(null);
       
-      try {
-        if (mangaName) { 
-          const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/volumes/get_volumes_by_manga`, {
-            manga_id: mangaData?.manga_id,
-          });
-          if(response.data.success == 1) {
-            setVolumes(response.data)
-          }
-        }
-      } catch (err) {
-        console.error("Error fetching manga details:", err);
-        setError("Failed to load manga details. Please check the URL.");
-      } finally {
-        setIsLoading(false);
-      }
+    //   try {
+    //     if (mangaName) { 
+    //       const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/volumes/get_volumes_by_manga`, {
+    //         manga_id: mangaData?.manga_id,
+    //       });
+    //       if(response.data.success == 1) {
+    //         setVolumes(response.data)
+    //       }
+    //     }
+    //   } catch (err) {
+    //     console.error("Error fetching manga details:", err);
+    //     setError("Failed to load manga details. Please check the URL.");
+    //   } finally {
+    //     setIsLoading(false);
+    //   }
       
-    }
+    // }
 
     fetchMangaDetails();
   }, [mangaName]);
@@ -183,4 +184,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;

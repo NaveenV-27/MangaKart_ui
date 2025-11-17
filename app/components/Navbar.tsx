@@ -32,7 +32,8 @@ const Navbar = () => {
   const [searchResults, setSearchResults] = useState<MangaResult[]>([]);
   const [isSearching, setIsSearching] = useState<boolean>(true);
 
-  const count = useSelector((state: RootState) => state.cart.totalCount)
+  const cartState = useSelector((state: RootState) => state.cart);
+  const count = cartState?.totalCount || 0;
 
   useEffect(() => {
     setIsMounted(true);
@@ -53,7 +54,7 @@ const Navbar = () => {
           search: searchTerm,
           limit: 5,
         });
-        setSearchResults(response.data.results.map((m: any) => ({ 
+        setSearchResults(response.data.results.map((m: MangaResult) => ({ 
           _id: m._id, 
           title: m.title, 
           manga_id: m.manga_id, 

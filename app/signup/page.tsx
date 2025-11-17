@@ -214,6 +214,7 @@ const SignupPage = () => {
       //   router.push('/login');
       // }, 2000);
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       const apiError = err.response?.data?.message || "Registration failed due to a server error.";
       setError(apiError);

@@ -4,8 +4,18 @@ import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 
+interface MangaProps {
+  _id: string;
+  manga_id: string;
+  title: string;
+  authors: string[];
+  genres: string[];
+  cover_image: string;
+  rating: number;
+}
+
 const GenrePage = () => {
-  const [mangaList, setMangaList] = useState([]);
+  const [mangaList, setMangaList] = useState<MangaProps[]>([]);
   const params = useParams();
   const genre : string = typeof (params.genre) === "string"? params.genre : "";
 
@@ -37,7 +47,7 @@ const GenrePage = () => {
       
       {mangaList.length > 0 ? (
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'>
-          {mangaList.map((manga: any) => (
+          {mangaList.map((manga: MangaProps) => (
             <div key={manga._id} className='bg-gray-800 rounded-lg overflow-hidden shadow-lg transform hover:scale-105 transition-transform duration-300'>
               <img 
                 src={manga.cover_image} 

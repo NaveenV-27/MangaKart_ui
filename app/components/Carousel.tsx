@@ -3,21 +3,21 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { TrendingUp, Play, Pause } from 'lucide-react';
-import onepiece from "@/public/covers/onepiece.jpg";
-import naruto from "@/public/covers/naruto.jpg";
-import dragonball from "@/public/covers/dragonball.jpg";
+import { TrendingUp } from 'lucide-react';
+// import onepiece from "@/public/covers/onepiece.jpg";
+// import naruto from "@/public/covers/naruto.jpg";
+// import dragonball from "@/public/covers/dragonball.jpg";
 
 interface SlideItem {
-  img: any; // Using `any` for simplicity with StaticImageData
+  img: string; // Using `any` for simplicity with StaticImageData
   name: string;
   rating: string;
 }
 
 const list: SlideItem[] = [
-  { img: onepiece, name: "One Piece", rating: "9.7" },
-  { img: dragonball, name: "Dragon Ball", rating: "9.3" },
-  { img: naruto, name: "Naruto", rating: "8.9" },
+  { img: "https://res.cloudinary.com/mangakart/image/upload/v1758189872/uploads/sxevyu3z8w7rb3vfsudp.avif", name: "One Piece", rating: "9.7" },
+  { img: "https://res.cloudinary.com/mangakart/image/upload/v1758190467/uploads/wsnmtkqbbdnmmlkcgqc0.avif", name: "Dragon Ball", rating: "9.3" },
+  { img: "https://res.cloudinary.com/mangakart/image/upload/v1758190322/uploads/uiijxsxxda7n15uhdngb.avif", name: "Naruto", rating: "8.9" },
 ];
 
 // const AUTO_SLIDE_INTERVAL = 5000; // Auto-slide interval in milliseconds
@@ -40,6 +40,15 @@ const Card = () => {
   // }, [index, isPaused]);
 
   // Keyboard navigation
+  
+  const prevSlide = (): void => {
+    setIndex(index === 0 ? list.length - 1 : index - 1);
+  };
+  
+  const nextSlide = (): void => {
+    setIndex(index === list.length - 1 ? 0 : index + 1);
+  };
+  
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft") {
@@ -52,15 +61,7 @@ const Card = () => {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [index]);
-
-  const prevSlide = (): void => {
-    setIndex(index === 0 ? list.length - 1 : index - 1);
-  };
-  
-  const nextSlide = (): void => {
-    setIndex(index === list.length - 1 ? 0 : index + 1);
-  };
+  }, [index, nextSlide, prevSlide]);
 
   return (
     <div 

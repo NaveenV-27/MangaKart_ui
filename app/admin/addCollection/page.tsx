@@ -16,8 +16,6 @@ const AddCollection = () => {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const router = useRouter();
-
   useEffect(() => {
     const fetchAllManga = async () => {
       try {
@@ -59,6 +57,7 @@ const AddCollection = () => {
           manga_ids: selectedManga,
         }
       );
+      console.log("Response", response.data);
       setMessage(`Collection '${collectionName}' created successfully!`);
       setCollectionName('');
       setSelectedManga([]);

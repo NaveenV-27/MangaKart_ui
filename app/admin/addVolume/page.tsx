@@ -29,8 +29,6 @@ const AddVolume = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
 
-  const router = useRouter();
-
   // Debounced search effect
   useEffect(() => {
     if (!mangaQuery) {
@@ -46,7 +44,7 @@ const AddVolume = () => {
           search: mangaQuery,
         });
         // Correctly handle the response format
-        setMangaResults(response.data.results.map((m: any) => ({ _id: m._id, title: m.title })));
+        setMangaResults(response.data.results.map((m: {_id : string; title: string;}) => ({ _id: m._id, title: m.title })));
       } catch (error) {
         console.error("Error searching manga titles:", error);
         setMangaResults([]);

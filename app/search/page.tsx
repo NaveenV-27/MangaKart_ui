@@ -1,17 +1,19 @@
-"use client"
-import { useSearchParams } from 'next/navigation'
-import React from 'react'
+// app/search/page.tsx (Server Component, NO "use client")
+import { Suspense } from 'react';
+import SearchHandler from './SearchHandler'; // Import the client component
 
-const page = () => {
-    const searchParams = useSearchParams()
-    const search = searchParams.get('query')
-    return (
-        <div className='flex-center text-2xl font-serif'>
-            <div className='h-screen bg-amber-100 w-[20%]'>Filters</div>
-            <div className='flex-center h-screen overflow-scroll bg-gray-100 text-black w-[80%]'>Search page with {search}</div>
-            
-        </div>
-    )
+export default function SearchPage() {
+  // Any server-side data fetching happens here.
+  // ...
+
+  return (
+    <div>
+      <h1>Search Results</h1>
+      
+      {/* 🎯 FIX: Wrap the component that uses the hook in Suspense */}
+      <Suspense fallback={<div>Loading search parameters...</div>}>
+        <SearchHandler />
+      </Suspense>
+    </div>
+  );
 }
-
-export default page
