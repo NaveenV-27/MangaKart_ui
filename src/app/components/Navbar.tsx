@@ -12,6 +12,7 @@ import { Menu, X, Star } from 'lucide-react';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
 import { RootState } from '../redux/store/store';
+import Cookies from 'js-cookie';
 // import {addToCart,decrementQuantity,removeItem, clearCart } from '../redux/slices/cartSlice';
 
 interface MangaResult {
@@ -34,6 +35,8 @@ const Navbar = () => {
 
   const cartState = useSelector((state: RootState) => state.cart);
   const count = cartState?.totalCount || 0;
+  const role = Cookies.get("ROLE") || "";
+  const isAdmin = role === "ADMIN";
 
   useEffect(() => {
     setIsMounted(true);
@@ -166,17 +169,20 @@ const Navbar = () => {
         </div>
         
         <ul className='flex-center gap-4 text-xl mr-4'>
-          <Link href="/admin" className='cursor-pointer hover:scale-110 hover:text-white transition-all'>
+          {isAdmin && <Link href="/admin" className='cursor-pointer hover:scale-110 hover:text-white transition-all'>
             Admin
           </Link>
+          }
           <Link href="/genres" className='cursor-pointer hover:scale-110 hover:text-white transition-all'>
             Genres
           </Link>
           <li className='cursor-pointer hover:scale-110 hover:text-white transition-all'>Contact</li>
-          <li className='cursor-pointer hover:scale-110 hover:text-white transition-all flex-center '>
-            <p className='pl-2 pr-1 rounded-l-3xl bg-gray-700 text-sm hidden group-hover:flex'>Naveen</p>
-            <CgProfile className='size-6' />
-          </li>
+            <Link href={isAdmin ? "/admin/profile" : "profile"} className='cursor-pointer hover:scale-110 hover:text-white transition-all'>
+              {/* <p className='pl-2 pr-1 rounded-l-3xl bg-gray-700 text-sm group-hover:flex'>Naveen</p> */}
+              <CgProfile className='size-6' />
+            </Link>
+          {/* <li className='cursor-pointer hover:scale-110 hover:text-white transition-all flex-center '>
+          </li> */}
           <li className='cursor-pointer hover:scale-110 hover:text-white transition-all flex-center relative'>
             <Link href="/cart">
               <FaShoppingCart className='size-6' />

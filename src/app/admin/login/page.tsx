@@ -9,7 +9,7 @@ import { User, Lock, Eye, EyeOff, UserCheck2 } from 'lucide-react';
 const LoginPage = () => {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    usernameOrEmail: '', // Field for user to enter either username or email
+    usernameOrId: '', // Field for user to enter either username or email
     password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -27,11 +27,10 @@ const LoginPage = () => {
     setError(''); // Clear error on input change
   };
 
-  // --- Form Submission Handler ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.usernameOrEmail || !formData.password) {
+    if (!formData.usernameOrId || !formData.password) {
       setError("Please enter your username/email and password.");
       return;
     }
@@ -43,11 +42,11 @@ const LoginPage = () => {
     try {
       
       const payload = {
-        identifier: formData.usernameOrEmail, // Send field as 'identifier'
+        identifier: formData.usernameOrId, // Send field as 'identifier'
         password: formData.password,
       };
 
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/users/login`,
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/admin/admin_login`,
         payload,
         {
           withCredentials: true
@@ -77,14 +76,14 @@ const LoginPage = () => {
   // --- Render ---
 
   return (
-    <div className="flex-center min-h-[90vh] bg-gray-900 p-4">
+    <div className="flex-center h-screen bg-gray-900 p-4">
       <div className="bg-gray-800 p-8 md:p-10 rounded-xl shadow-2xl w-full max-w-sm text-gray-300">
         <h1 className="text-4xl font-extrabold text-white text-center mb-2 flex-center gap-2">
           <UserCheck2 className=' w-8 h-8 self-baseline-last'/>
           Log In
         </h1>
         <p className="text-gray-400 text-center mb-8">
-          Welcome back to MangaKart!
+          Welcome back Admin!!
         </p>
 
         {/* --- Feedback Messages --- */}
@@ -106,8 +105,8 @@ const LoginPage = () => {
             <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" />
             <input
               type="text"
-              name="usernameOrEmail"
-              value={formData.usernameOrEmail}
+              name="usernameOrId"
+              value={formData.usernameOrId}
               onChange={handleChange}
               placeholder="Username or Email"
               className="w-full pl-10 pr-4 py-3 rounded-lg bg-gray-700 border border-gray-600 focus:ring-blue-500 focus:border-blue-500 text-white placeholder-gray-400"
@@ -152,7 +151,7 @@ const LoginPage = () => {
 
         <p className="text-sm text-center text-gray-400 mt-6">
           Dont have an account? 
-          <Link href="/signup" className="text-blue-400 hover:text-blue-300 font-medium ml-1">
+          <Link href="/admin/signup" className="text-blue-400 hover:text-blue-300 font-medium ml-1">
             Sign Up
           </Link>
         </p>

@@ -17,11 +17,9 @@ export default function ConditionalLayout({
   const [isAuthPage,setIsAuthPage] = useState(false);
 
   useEffect(() => {
-    setIsAuthPage(pathname === "/login" || pathname === "/signup");
+    setIsAuthPage(pathname === "/login" || pathname === "/signup" || pathname === "/admin/login" || pathname === "/admin/signup");
   }, [pathname])
 
-  // console.log(pathname, isAuthPage);
-  // const isRecAuthPage = pathname === "/ReceptionistAuth/login";
   return (
       <div>
         <Provider store={store}>
