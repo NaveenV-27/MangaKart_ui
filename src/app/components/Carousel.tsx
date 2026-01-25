@@ -20,24 +20,24 @@ const list: SlideItem[] = [
   { img: "https://res.cloudinary.com/mangakart/image/upload/v1758190322/uploads/uiijxsxxda7n15uhdngb.avif", name: "Naruto", rating: "8.9" },
 ];
 
-// const AUTO_SLIDE_INTERVAL = 5000; // Auto-slide interval in milliseconds
+const AUTO_SLIDE_INTERVAL = 3000; // Auto-slide interval in milliseconds
 
 const Card = () => {
   const [index, setIndex] = useState<number>(0);
-  // const [isPaused, setIsPaused] = useState<boolean>(false);
+  const [isPaused, setIsPaused] = useState<boolean>(false);
 
   // // Auto-slide functionality
-  // useEffect(() => {
-  //   let interval: NodeJS.Timeout | null = null;
-  //   if (!isPaused) {
-  //     interval = setInterval(() => {
-  //       nextSlide();
-  //     }, AUTO_SLIDE_INTERVAL);
-  //   }
-  //   return () => {
-  //     if (interval) clearInterval(interval);
-  //   };
-  // }, [index, isPaused]);
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    if (!isPaused) {
+      interval = setInterval(() => {
+        nextSlide();
+      }, AUTO_SLIDE_INTERVAL);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [index, isPaused]);
 
   // Keyboard navigation
   
@@ -68,8 +68,8 @@ const Card = () => {
       className="relative w-full max-w-screen-lg mt-4 mx-auto overflow-hidden group"
       role="region"
       aria-roledescription="carousel"
-      // onMouseEnter={() => setIsPaused(true)}
-      // onMouseLeave={() => setIsPaused(false)}
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
     >
       <div
         className="flex transition-transform duration-500"

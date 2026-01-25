@@ -42,9 +42,12 @@ const AddVolume = () => {
       try {
         const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/manga/search_manga`, {
           search: mangaQuery,
+        }, {
+          withCredentials: true
         });
         // Correctly handle the response format
-        setMangaResults(response.data.results.map((m: {_id : string; title: string;}) => ({ _id: m._id, title: m.title })));
+        // console.log("Manga search response:", response.data);
+        setMangaResults(response.data.results.map((m: {manga_id : string; title: string;}) => ({ _id: m.manga_id, title: m.title })));
       } catch (error) {
         console.error("Error searching manga titles:", error);
         setMangaResults([]);
@@ -57,6 +60,7 @@ const AddVolume = () => {
   }, [mangaQuery]);
 
   const handleMangaSelect = (manga: MangaTitle) => {
+    console.log("Selected manga:", manga);
     setSelectedManga(manga);
     setMangaQuery(manga.title);
     setMangaResults([]);
@@ -86,28 +90,39 @@ const AddVolume = () => {
       return;
     }
 
-    const formData = new FormData();
-    formData.append('manga_id', selectedManga._id);
-    formData.append('volume_number', volumeNumber);
-    formData.append('title', volumeTitle);
-    formData.append('description', description);
-    formData.append('price', price);
-    formData.append('stock', stock);
+    // const formData = new FormData();
+    // formData.append('manga_id', selectedManga._id);
+    // formData.append('volume_number', volumeNumber);
+    // formData.append('title', volumeTitle);
+    // formData.append('description', description);
+    // formData.append('price', price);
+    // formData.append('stock', stock);
 
-    if (coverImageFile) {
-      formData.append('cover_image', coverImageFile);
-    } else if (coverImageUrl) {
-      formData.append('cover_image_url', coverImageUrl);
-    }
+    // if (coverImageFile) {
+    //   formData.append('cover_image', coverImageFile);
+    // } else if (coverImageUrl) {
+    //   formData.append('cover_image_url', coverImageUrl);
+    // }
+    const payload = {
+      manga_id: selectedManga._id,
+      volume_number: volumeNumber,
+      title: volumeTitle,
+      description,
+      price,
+      stock,
+      cover_image_url : coverImageUrl
+    };
 
     try {
+      console.log("FormData:", payload);
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/api/volumes/create_volume`,
-        formData,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/volumes/create_volume`, 
+        payload,
         {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
+          // headers: {
+          //   'Content-Type': 'multipart/form-data',
+          // }, 
+          withCredentials: true
         }
       );
       setMessage(`Volume ${volumeNumber} added successfully to ${selectedManga.title}!`);

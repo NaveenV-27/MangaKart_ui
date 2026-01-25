@@ -38,8 +38,12 @@ const Navbar = () => {
   const role = Cookies.get("ROLE") || "";
   const isAdmin = role === "ADMIN";
 
+  const [username, setUsername] = useState<string | null>(null);
+
   useEffect(() => {
     setIsMounted(true);
+    const nameFromCookie = Cookies.get("Name"); // 👈 cookie key
+    if (nameFromCookie) setUsername(nameFromCookie);
   }, []);
 
   // Debounced search effect
@@ -48,19 +52,19 @@ const Navbar = () => {
       setSearchResults([]);
       return;
     }
-    
+
     setIsSearching(true);
-    
+
     const delayDebounceFn = setTimeout(async () => {
       try {
         const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/manga/search_manga`, {
           search: searchTerm,
           limit: 5,
         });
-        setSearchResults(response.data.results.map((m: MangaResult) => ({ 
-          _id: m._id, 
-          title: m.title, 
-          manga_id: m.manga_id, 
+        setSearchResults(response.data.results.map((m: MangaResult) => ({
+          _id: m._id,
+          title: m.title,
+          manga_id: m.manga_id,
           authors: m.authors,
           cover_image: m.cover_image,
           rating: m.rating,
@@ -87,7 +91,7 @@ const Navbar = () => {
     setSearchTerm('');
     setIsMenuOpen(false);
   };
-  
+
   const handleResultClick = (title: string) => {
     router.push(`/manga/${title.replaceAll(" ", "-")}`);
     setSearchResults([]);
@@ -103,7 +107,7 @@ const Navbar = () => {
 
   return (
     <nav className='h-[10vh] sticky top-0 z-50 bg-gradient-to-r from-[#0B1623] to-[#1b2531] text-gray-300 border-b-1 border-[#807b7b]'>
-      
+
       {/* Desktop Navbar (visible on md and up) */}
       <div className='hidden md:flex flex-center justify-between py-2 px-4 h-full'>
         <Link href="/" className='max-w-fit ml-5'>
@@ -114,12 +118,12 @@ const Navbar = () => {
             className=""
           />
         </Link>
-        
+
         <div className="flex-center relative w-full bg-white text-black ml-32 mr-16 h-10 rounded-3xl justify-between">
-          <input 
-            type="text" 
-            placeholder='Search for manga' 
-            className='w-full border-2 border-white focus:outline-none px-3 h-full rounded-l-2xl p-2' 
+          <input
+            type="text"
+            placeholder='Search for manga'
+            className='w-full border-2 border-white focus:outline-none px-3 h-full rounded-l-2xl p-2'
             value={searchTerm}
             onChange={handleChange}
             onFocus={() => setSearchFocused(true)}
@@ -160,14 +164,14 @@ const Navbar = () => {
               ))}
             </div>
           )}
-          <button 
-            className='bg-[#707275] w-12 flex-center p-2 h-full rounded-r-2xl size-8 hover:scale-105 hover:bg-[#828488] cursor-pointer' 
+          <button
+            className='bg-[#707275] w-12 flex-center p-2 h-full rounded-r-2xl size-8 hover:scale-105 hover:bg-[#828488] cursor-pointer'
             onClick={handleSearchSubmit}
           >
             <IoSearch className='fill-black' />
           </button>
         </div>
-        
+
         <ul className='flex-center gap-4 text-xl mr-4'>
           {isAdmin && <Link href="/admin" className='cursor-pointer hover:scale-110 hover:text-white transition-all'>
             Admin
@@ -177,10 +181,17 @@ const Navbar = () => {
             Genres
           </Link>
           <li className='cursor-pointer hover:scale-110 hover:text-white transition-all'>Contact</li>
-            <Link href={isAdmin ? "/admin/profile" : "profile"} className='cursor-pointer hover:scale-110 hover:text-white transition-all'>
-              {/* <p className='pl-2 pr-1 rounded-l-3xl bg-gray-700 text-sm group-hover:flex'>Naveen</p> */}
-              <CgProfile className='size-6' />
-            </Link>
+          <Link
+            href={isAdmin ? "/admin/profile" : "/profile"}
+            className="flex items-center hover:scale-110 hover:text-white transition-all bg-gray-700 rounded-full gap-1"
+          >
+            {isMounted && username && (
+              <span className="text-sm  pl-1 py-1 rounded-l-full">
+                {username}
+              </span>
+            )}
+            <CgProfile className="size-6" />
+          </Link>
           {/* <li className='cursor-pointer hover:scale-110 hover:text-white transition-all flex-center '>
           </li> */}
           <li className='cursor-pointer hover:scale-110 hover:text-white transition-all flex-center relative'>
@@ -220,16 +231,16 @@ const Navbar = () => {
             </button>
           </div>
         </div>
-        
+
         <div
           id="mobile-menu"
           className={`w-full ${isMenuOpen ? 'block' : 'hidden'} mt-4`}
         >
           <div className="relative w-full bg-white text-black h-10 rounded-3xl mb-4">
-            <input 
-              type="text" 
-              placeholder='Search for manga...' 
-              className='w-full focus:outline-none px-4 h-full rounded-3xl p-2 text-black border-2 border-transparent focus:border-gray-500 transition-colors' 
+            <input
+              type="text"
+              placeholder='Search for manga...'
+              className='w-full focus:outline-none px-4 h-full rounded-3xl p-2 text-black border-2 border-transparent focus:border-gray-500 transition-colors'
               value={searchTerm}
               onChange={handleChange}
               onKeyPress={handleKeyPress}
@@ -264,13 +275,13 @@ const Navbar = () => {
                         <span className="ml-1 text-gray-300">{manga.rating || 'N/A'}</span>
                       </div>
                     </div>
-                    
+
                   </div>
                 ))}
               </div>
             )}
-            <button 
-              className='absolute right-0 top-0 bg-[#707275] flex-center p-2 h-full rounded-r-3xl w-12 hover:scale-105 hover:bg-[#828488] cursor-pointer' 
+            <button
+              className='absolute right-0 top-0 bg-[#707275] flex-center p-2 h-full rounded-r-3xl w-12 hover:scale-105 hover:bg-[#828488] cursor-pointer'
               onClick={handleSearchSubmit}
               aria-label="Search"
             >

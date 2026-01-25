@@ -90,6 +90,7 @@ const UploadMangaDataForm: React.FC = () => {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        withCredentials: true
       });
       console.log("Response:", response.data, response.data.data.cover_image);
       setMessage(`Upload successful! URL: ${response.data.data.cover_image}`);

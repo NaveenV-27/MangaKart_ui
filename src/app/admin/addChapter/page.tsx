@@ -61,6 +61,7 @@ const AddChapter = () => {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
+          withCredentials: true
         }
       );
       console.log("Response", response.data);

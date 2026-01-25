@@ -25,6 +25,8 @@ const MangaList = () => {
       try {
         const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/manga/get_random_manga`, {
           limit: 6,
+        }, {
+          withCredentials: true
         });
         setMangaList(response.data);
       } catch (err) {

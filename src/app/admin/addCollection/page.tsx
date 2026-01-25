@@ -55,6 +55,8 @@ const AddCollection = () => {
         {
           name: collectionName,
           manga_ids: selectedManga,
+        }, {
+          withCredentials: true
         }
       );
       console.log("Response", response.data);

@@ -25,7 +25,10 @@ export default function ConditionalLayout({
         <Provider store={store}>
 
         {!isAuthPage && <NavBar/>}
-        <div className={`min-h-[80vh] ${isAuthPage ? "" : "bgimg"}`}>
+        <div className={`min-h-[80vh] ${""
+          // isAuthPage ? "" : "bgimg"
+        }
+        `}>
           {children}
         </div>
         {!isAuthPage && <Footer/>}
