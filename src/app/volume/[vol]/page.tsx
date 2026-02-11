@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation'; // Added useRouter for navigation
 import axios from 'axios';
 import Image from 'next/image';
@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { ShoppingCart, Package, Trash, Minus, Plus, Loader2 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../redux/store/store';
-import { addToCartDb, updateCartItemDb, removeFromCartDb } from '../../redux/slices/cartSlice';
+import { addToCartDb, updateCartItemDb, removeFromCartDb, fetchCart } from '../../redux/slices/cartSlice';
 
 // --- Interfaces (Kept as is) ---
 interface VolumeData {
@@ -42,14 +42,34 @@ const VolumeDetailsPage = () => {
   const currentCartItems = cartState?.cartItems || [];
   console.log("Curr quantity:", currentCartItems);
 
+  // Track if cart has been fetched
+  const cartFetched = useRef(false);
+
+  // Fetch cart on mount to ensure we have the latest cart data
+  useEffect(() => {
+    if (!cartFetched.current) {
+      cartFetched.current = true;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (dispatch as any)(fetchCart());
+    }
+  }, [dispatch]);
+
   // const currentCartItems = useSelector((state: RootState) => state.cart.cartItems);
 
-  const getInitialQuantity = useCallback((id: string) => {
+  const getQuantityFromCart = useCallback((id: string) => {
     // Use the Redux cart state to find the item by volume_id
     const existingItem = currentCartItems.find(item => item.volume_id === id);
     // Returns the existing quantity, or 0 if not found
     return existingItem ? existingItem.quantity : 0;
   }, [currentCartItems]);
+
+  // Sync local quantity state with Redux cart when cart changes
+  useEffect(() => {
+    if (volumeData?.volume_id) {
+      const cartQty = getQuantityFromCart(volumeData.volume_id);
+      setQuantity(cartQty);
+    }
+  }, [currentCartItems, volumeData?.volume_id, getQuantityFromCart]);
 
   useEffect(() => {
     const fetchVolumeDetails = async () => {
@@ -65,9 +85,7 @@ const VolumeDetailsPage = () => {
           console.log("API called", response.data);
           const data = response.data.data || response.data;
           setVolumeData(data);
-
-          // Set initial quantity from cart after data is fetched
-          setQuantity(getInitialQuantity(data.volume_id || volumeId));
+          // Initial quantity will be set by the cart sync useEffect
         }
       } catch (err) {
         console.error("Error fetching volume details:", err);
@@ -78,7 +96,7 @@ const VolumeDetailsPage = () => {
     };
 
     fetchVolumeDetails();
-  }, [volumeId, getInitialQuantity]);
+  }, [volumeId]);
 
   // --- Cart and Order Handlers ---
 
@@ -103,7 +121,7 @@ const VolumeDetailsPage = () => {
     const itemId = volumeData.volume_id;
     const maxStock = volumeData.stock;
 
-    const currentQuantityInCart = getInitialQuantity(itemId);
+    const currentQuantityInCart = getQuantityFromCart(itemId);
     const newQuantity = currentQuantityInCart + change;
 
     if (change > 0) {
@@ -179,7 +197,7 @@ const VolumeDetailsPage = () => {
     if (!volumeData || volumeData.stock === 0) return;
 
     const itemId = volumeData.volume_id;
-    const currentQuantityInCart = getInitialQuantity(itemId);
+    const currentQuantityInCart = getQuantityFromCart(itemId);
 
     // Calculate the difference between the local 'quantity' state (the desired quantity) and the cart state
     const quantityChange = quantity - currentQuantityInCart;
@@ -270,7 +288,7 @@ const VolumeDetailsPage = () => {
 
   const inStock = volumeData.stock > 0;
   // Use the Redux state utility:
-  const currentQuantityInCart = getInitialQuantity(volumeData.volume_id);
+  const currentQuantityInCart = getQuantityFromCart(volumeData.volume_id);
   const inCart = currentQuantityInCart > 0;
 
   // Primary Button Styles
@@ -374,7 +392,7 @@ const VolumeDetailsPage = () => {
                   onClick={handleAddToCart}
                   disabled={!inStock || quantity === 0}
                   className={`${primaryButtonClass} 
-                          ${inStock && quantity > 0 ? 'bg-blue-600 hover:bg-blue-500' : 'bg-gray-600 text-gray-400 cursor-not-allowed'}
+                          ${inStock && quantity > 0 ? 'bg-blue-600 hover:bg-blue-500 cursor-pointer' : 'bg-gray-600 text-gray-400 cursor-not-allowed'}
                         `}
                 >
                   <ShoppingCart size={20} className='mr-3' />
@@ -388,7 +406,7 @@ const VolumeDetailsPage = () => {
                 {inStock && quantity > 0 && (
                   <button
                     onClick={handleOrderNow}
-                    className={`${secondaryButtonClass} bg-transparent text-purple-400 hover:bg-purple-600 hover:text-white`}
+                    className={`${secondaryButtonClass} bg-transparent text-purple-400 hover:bg-purple-600 hover:text-white cursor-pointer`}
                   >
                     <Package size={20} className='mr-3' />
                     Buy Now

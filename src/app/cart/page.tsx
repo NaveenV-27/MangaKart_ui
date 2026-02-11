@@ -139,7 +139,7 @@ const CartPage = () => {
                     <div className='flex items-center space-x-2 bg-gray-700 rounded-full px-2 py-1'>
                       <button
                         onClick={() => handleDecrement(item)}
-                        className='text-gray-300 hover:text-white transition-colors'
+                        className='text-gray-300 hover:text-white transition-colors cursor-pointer'
                         aria-label="Decrease quantity"
                       >
                         {item.quantity <= 1 ? <FaTrash size={12} /> : <FaMinus size={12} />}
@@ -147,7 +147,7 @@ const CartPage = () => {
                       <span className='font-bold text-white'>{item.quantity}</span>
                       <button
                         onClick={() => handleIncrement(item)}
-                        className='text-gray-300 hover:text-white transition-colors'
+                        className='text-gray-300 hover:text-white transition-colors cursor-pointer'
                         aria-label="Increase quantity"
                       >
                         <FaPlus size={12} />
@@ -156,7 +156,7 @@ const CartPage = () => {
                     {item.quantity > 1 && (
                       <button
                         onClick={() => handleRemoveItem(item)}
-                        className='text-red-400 hover:text-red-500 transition-colors cursor-pointer'
+                        className='text-red-400 hover:text-red-500 transition-colors cursor-pointer cursor-pointer'
                         aria-label="Remove item"
                       >
                         <FaTrash size={20} />
@@ -190,11 +190,11 @@ const CartPage = () => {
               </div>
               <button
                 onClick={handleClearCart}
-                className='w-full py-3 bg-red-900/30 text-red-200 rounded-lg hover:bg-red-900/50 transition-colors font-semibold border border-red-800'
+                className='w-full py-3 bg-red-900/30 text-red-200 rounded-lg hover:bg-red-900/50 transition-colors font-semibold border border-red-800 cursor-pointer'
               >
                 Clear Cart
               </button>
-              <button className='w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold'>
+              <button className='w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold cursor-pointer'>
                 Proceed to Checkout
               </button>
             </div>
