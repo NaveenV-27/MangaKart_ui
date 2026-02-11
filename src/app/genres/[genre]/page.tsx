@@ -3,6 +3,7 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 
 interface MangaProps {
   _id: string;
@@ -49,10 +50,11 @@ const GenrePage = () => {
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'>
           {mangaList.map((manga: MangaProps) => (
             <div key={manga._id} className='bg-gray-800 rounded-lg overflow-hidden shadow-lg transform hover:scale-105 transition-transform duration-300'>
-              <img 
-                src={manga.cover_image} 
-                alt={manga.title} 
-                className='w-full h-80 object-cover'
+              <Link href={`/manga/${manga.title.replace(/\s+/g, '-')}`}>
+                <img 
+                  src={manga.cover_image} 
+                  alt={manga.title} 
+                  className='w-full h-80 object-cover'
               />
               <div className='p-4'>
                 <h2 className='text-xl font-semibold text-white truncate'>
@@ -76,6 +78,7 @@ const GenrePage = () => {
                   <span className='font-bold'>{manga.rating}</span>
                 </div>
               </div>
+              </Link>
             </div>
           ))}
         </div>

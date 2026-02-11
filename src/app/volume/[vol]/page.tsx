@@ -7,12 +7,13 @@ import Image from 'next/image';
 import { ShoppingCart, Package, Trash, Minus, Plus, Loader2 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../redux/store/store';
-  import { addToCart, decrementQuantity, removeItem } from '../../redux/slices/cartSlice';
+import { addToCartDb, updateCartItemDb, removeFromCartDb } from '../../redux/slices/cartSlice';
 
 // --- Interfaces (Kept as is) ---
 interface VolumeData {
   _id: string;
   manga_id: string;
+  manga_title?: string; // Optional - backend may or may not return this
   volume_id: string;
   volume_title: string;
   volume_number: number;
@@ -39,13 +40,14 @@ const VolumeDetailsPage = () => {
   
   // 🎯 FIX: Check if cartState is defined (not undefined)
   const currentCartItems = cartState?.cartItems || [];
+  console.log("Curr quantity:", currentCartItems);
 
   // const currentCartItems = useSelector((state: RootState) => state.cart.cartItems);
 
   const getInitialQuantity = useCallback((id: string) => {
-    // Use the Redux cart state to find the item
-    const existingItem = currentCartItems.find(item => item._id === id);
-    // Returns the existing quantity, or 0 if not found (0 is safer than 1 here)
+    // Use the Redux cart state to find the item by volume_id
+    const existingItem = currentCartItems.find(item => item.volume_id === id);
+    // Returns the existing quantity, or 0 if not found
     return existingItem ? existingItem.quantity : 0;
   }, [currentCartItems]);
 
@@ -80,29 +82,49 @@ const VolumeDetailsPage = () => {
 
   // --- Cart and Order Handlers ---
 
-  // Locate handleUpdateQuantity (around line 59) and replace it:
-  const handleUpdateQuantity = (change: number) => {
+  // Helper to build the add_item payload
+  const buildAddPayload = (qty: number) => {
+    if (!volumeData) return null;
+    return {
+      volume_id: volumeData.volume_id,
+      manga_title: volumeData.manga_title || volumeData.manga_id, // Use manga_title if available, fallback to manga_id
+      volume_title: volumeData.volume_title,
+      type: "volume" as const,
+      cover_image: volumeData.cover_image,
+      price: volumeData.price,
+      quantity: qty,
+    };
+  };
+
+  // Update quantity in cart via API
+  const handleUpdateQuantity = async (change: number) => {
     if (!volumeData || !volumeData.volume_id) return;
 
     const itemId = volumeData.volume_id;
-    const itemData = {
-      _id: itemId,
-      title: `${volumeData.volume_title || 'Volume'} #${volumeData.volume_number}`,
-      cover_image: volumeData.cover_image,
-      price: volumeData.price,
-      type: "volume",
-    };
     const maxStock = volumeData.stock;
 
-    // Use the current quantity from Redux, not the local state, for checks
     const currentQuantityInCart = getInitialQuantity(itemId);
     const newQuantity = currentQuantityInCart + change;
 
     if (change > 0) {
       // Handling Increment (Plus Button)
       if (newQuantity <= maxStock) {
-        // Dispatch the action to add 1 unit (or increment quantity)
-        dispatch(addToCart(itemData)); // addToCart handles the increment logic
+        if (currentQuantityInCart === 0) {
+          // Item not in cart yet, add it
+          const payload = buildAddPayload(1);
+          if (payload) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await (dispatch as any)(addToCartDb(payload));
+          }
+        } else {
+          // Item exists, update quantity
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (dispatch as any)(updateCartItemDb({ 
+            volume_id: itemId, 
+            type: "volume",
+            quantity: newQuantity 
+          }));
+        }
         setQuantity(newQuantity);
       } else {
         setMessage({ text: `Maximum stock available is ${maxStock}.`, type: 'error' });
@@ -111,26 +133,40 @@ const VolumeDetailsPage = () => {
     } else if (change < 0) {
       // Handling Decrement (Minus Button / Trash)
       if (currentQuantityInCart > 0) {
-        // Dispatch the action to decrement 1 unit (or remove if quantity becomes 0)
-        dispatch(decrementQuantity(itemId)); // decrementQuantity handles the decrement/removal logic
-        setQuantity(Math.max(0, currentQuantityInCart - 1));
-
-        // Optional: Show success message for removal if the quantity hits 0
-        if (currentQuantityInCart === 1) {
+        if (newQuantity <= 0) {
+          // Remove from cart
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (dispatch as any)(removeFromCartDb({ 
+            volume_id: itemId, 
+            type: "volume" 
+          }));
+          setQuantity(0);
           setMessage({ text: `Item removed from cart.`, type: 'success' });
           setTimeout(() => setMessage(null), 3000);
+        } else {
+          // Decrement quantity
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (dispatch as any)(updateCartItemDb({ 
+            volume_id: itemId, 
+            type: "volume",
+            quantity: newQuantity 
+          }));
+          setQuantity(newQuantity);
         }
       }
     }
   };
 
 
-  // Locate handleRemoveFromCart (around line 80) and replace it:
-  const handleRemoveFromCart = () => {
+  // Remove item from cart completely via API
+  const handleRemoveFromCart = async () => {
     if (!volumeData || !volumeData.volume_id) return;
 
-    // Dispatch the Redux action to remove the item completely
-    dispatch(removeItem(volumeData.volume_id));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (dispatch as any)(removeFromCartDb({ 
+      volume_id: volumeData.volume_id, 
+      type: "volume" 
+    }));
 
     setQuantity(0);
     setMessage({ text: `Item removed from cart.`, type: 'success' });
@@ -138,46 +174,59 @@ const VolumeDetailsPage = () => {
   }
 
 
-  // Locate handleAddToCart (around line 90) and replace it:
-  const handleAddToCart = () => {
+  // Add to cart via API
+  const handleAddToCart = async () => {
     if (!volumeData || volumeData.stock === 0) return;
 
     const itemId = volumeData.volume_id;
-    const itemToDispatch = {
-      _id: itemId,
-      title: `${volumeData.volume_title || 'Volume'} #${volumeData.volume_number}`,
-      cover_image: volumeData.cover_image,
-      price: volumeData.price,
-      type: "volume",
-    };
-
     const currentQuantityInCart = getInitialQuantity(itemId);
 
-    // Calculate the difference between the local 'quantity' state (the desired quantity) and the Redux state (current quantity)
+    // Calculate the difference between the local 'quantity' state (the desired quantity) and the cart state
     const quantityChange = quantity - currentQuantityInCart;
 
     if (quantityChange > 0) {
-      // If desired quantity is higher, dispatch 'addToCart' multiple times or use a custom action that accepts a delta.
-      // Since we rely on the `handleUpdateQuantity` loop, we'll simplify this function to dispatch the total amount needed.
-      // NOTE: This assumes the Redux action signature allows adding a quantity Delta. Based on your definition:
-      // addToCart: (state, action: PayloadAction<Omit<CartItem, 'quantity'>>)
-      // This signature only allows adding 1 unit at a time. Let's use a temporary loop for dispatching:
-      for (let i = 0; i < quantityChange; i++) {
-        dispatch(addToCart(itemToDispatch));
+      if (currentQuantityInCart === 0) {
+        // Add new item to cart
+        const payload = buildAddPayload(quantity);
+        if (payload) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (dispatch as any)(addToCartDb(payload));
+        }
+      } else {
+        // Update existing item quantity
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (dispatch as any)(updateCartItemDb({ 
+          volume_id: itemId, 
+          type: "volume",
+          quantity: quantity 
+        }));
       }
       setMessage({ text: `Cart updated: Quantity set to ${quantity}.`, type: 'success' });
     } else if (quantityChange < 0) {
-      // If desired quantity is lower, dispatch 'decrementQuantity' multiple times.
-      for (let i = 0; i < Math.abs(quantityChange); i++) {
-        dispatch(decrementQuantity(itemId));
-      }
       if (quantity === 0) {
+        // Remove from cart
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (dispatch as any)(removeFromCartDb({ 
+          volume_id: itemId, 
+          type: "volume" 
+        }));
         setMessage({ text: `Item removed from cart.`, type: 'success' });
       } else {
+        // Update to lower quantity
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (dispatch as any)(updateCartItemDb({ 
+          volume_id: itemId, 
+          type: "volume",
+          quantity: quantity 
+        }));
         setMessage({ text: `Cart updated: Quantity set to ${quantity}.`, type: 'success' });
       }
-    } else if (quantityChange === 0 && quantity === 0) {
-      dispatch(removeItem(itemId));
+    } else if (quantityChange === 0 && quantity === 0 && currentQuantityInCart > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (dispatch as any)(removeFromCartDb({ 
+        volume_id: itemId, 
+        type: "volume" 
+      }));
       setMessage({ text: `Item removed from cart.`, type: 'success' });
     } else {
       setMessage({ text: `Cart already up-to-date.`, type: 'success' });

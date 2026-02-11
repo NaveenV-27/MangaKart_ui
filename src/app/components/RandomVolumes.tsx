@@ -101,7 +101,7 @@ const RandomVolumes = () => {
                 {/* Action Button */}
                 <div className="mt-4">
                   <Link
-                    href={`/checkout/${volume.volume_id}`}
+                    href={`/checkout?type=volume&id=${volume.volume_id}`}
                     className='flex justify-center items-center w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-500'
                     aria-disabled={volume.stock === 0}
                     onClick={(e) => { if (volume.stock === 0) e.preventDefault(); }}
