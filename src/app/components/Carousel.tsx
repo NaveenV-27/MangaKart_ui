@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { TrendingUp } from 'lucide-react';
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
 // import onepiece from "@/public/covers/onepiece.jpg";
 // import naruto from "@/public/covers/naruto.jpg";
 // import dragonball from "@/public/covers/dragonball.jpg";
@@ -25,6 +27,18 @@ const AUTO_SLIDE_INTERVAL = 3000; // Auto-slide interval in milliseconds
 const Card = () => {
   const [index, setIndex] = useState<number>(0);
   const [isPaused, setIsPaused] = useState<boolean>(false);
+
+  useGSAP(() => {
+    gsap.fromTo("#animate", {
+      opacity: 0,
+      y: 20,
+    }, {
+      opacity: 1,
+      y: 0,
+      delay: 0.2,
+      duration: 0.6
+    })
+  }, []);
 
   // // Auto-slide functionality
   useEffect(() => {
@@ -65,6 +79,7 @@ const Card = () => {
 
   return (
     <div 
+      id='animate'
       className="relative w-full max-w-screen-lg mt-4 mx-auto overflow-hidden group"
       role="region"
       aria-roledescription="carousel"

@@ -9,6 +9,8 @@ import { Star, ShoppingCart } from 'lucide-react';
 import { useDispatch } from 'react-redux';
 import { addToCartDb } from '../../redux/slices/cartSlice';
 import { AppDispatch } from '../../redux/store/store';
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
 
 interface MangaData {
   _id: string;
@@ -116,9 +118,21 @@ const Page = () => {
     }
   };
 
+  useGSAP(() => {
+    gsap.fromTo("#animate", {
+      opacity: 0,
+      y: 20,
+    }, {
+      opacity: 1,
+      y: 0,
+      delay: 0.2,
+      duration: 0.6
+    })
+  }, []);
+
   if (isLoading) {
     return (
-      <div className="flex-center h-[79vh] text-gray-400 text-xl">
+      <div id='animate' className="flex-center h-[79vh] text-gray-400 text-xl">
         Loading manga details...
       </div>
     );
@@ -126,7 +140,7 @@ const Page = () => {
 
   if (error) {
     return (
-      <div className="flex-center h-[79vh] text-red-400 text-xl">
+      <div id='animate' className="flex-center h-[79vh] text-red-400 text-xl">
         {error}
       </div>
     );
@@ -134,14 +148,14 @@ const Page = () => {
 
   if (!mangaData) {
     return (
-      <div className="flex-center h-[79vh] text-gray-400 text-xl">
+      <div id='animate' className="flex-center h-[79vh] text-gray-400 text-xl">
         Manga not found.
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-4 md:p-8 text-gray-300">
+    <div id='animate' className="container mx-auto p-4 md:p-8 text-gray-300">
       <div className="bg-[#1b2531] rounded-lg shadow-2xl p-6 md:p-8">
         {/* Top Section: Image and Info */}
         <div className="flex flex-col md:flex-row gap-8 mb-8">

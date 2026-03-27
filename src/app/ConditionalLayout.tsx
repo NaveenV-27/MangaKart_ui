@@ -11,11 +11,12 @@ import { fetchCart } from "./redux/slices/cartSlice";
 // Inner component to use hooks inside Provider
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [isAuthPage, setIsAuthPage] = useState(false);
+  const [isAuthPage, setIsAuthPage] = useState(true);
   const dispatch = useDispatch();
   const cartFetched = useRef(false);
 
   useEffect(() => {
+    console.log("Use effect running")
     setIsAuthPage(pathname === "/login" || pathname === "/signup" || pathname === "/admin/login" || pathname === "/admin/signup");
   }, [pathname]);
 

@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Image from "next/image";
 import Link from 'next/link';
 import { LucideArrowUpRight, Star } from 'lucide-react';
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
 
 interface MangaProps {
   _id: string;
@@ -19,6 +21,29 @@ const MangaList = () => {
   const [mangaList, setMangaList] = useState<MangaProps[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useGSAP(() => {
+    gsap.fromTo(".tile", {
+      opacity: 0,
+      y: 20,
+    }, {
+      opacity: 1,
+      y: 0,
+      delay: 0.1,
+      duration: 0.6,
+      stagger: 2
+    });
+
+    gsap.fromTo("#animate", {
+      opacity: 0,
+      y: 20,
+    }, {
+      opacity: 1,
+      y: 0,
+      delay: 0.2,
+      duration: 0.6
+    })
+  }, [mangaList])
 
   useEffect(() => {
     const fetchMangaList = async () => {
@@ -41,7 +66,7 @@ const MangaList = () => {
 
   if (isLoading) {
     return (
-      <div className="flex-center h-48 text-gray-400 text-xl">
+      <div id='animate' className="flex-center h-48 text-gray-400 text-xl">
         Loading New Releases...
       </div>
     );
@@ -49,21 +74,21 @@ const MangaList = () => {
 
   if (error) {
     return (
-      <div className="flex-center h-48 text-red-400 text-lg">
+      <div id='animate' className="flex-center h-48 text-red-400 text-lg">
         {error}
       </div>
     );
   }
 
   return (
-    <div className='p-6 md:p-10 mt-2 rounded-2xl bg-black/20'
+    <div id='animate' className='p-6 md:p-10 mt-2 rounded-2xl bg-black/20'
     //  style={{"backgroundColor" : "rgba(9,0,9,0.2)"}}
       >
       <h2 className='text-3xl font-bold mb-6 text-white'>Some Popular Series</h2>
       <div className='flex flex-col w-full'>
         {mangaList.length > 0 ? (
           <>
-          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12 gap-y-8 w-full mb-6'>
+          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12 gap-y-8 w-full mb-6 tile'>
             {mangaList.map((manga, idx) => (
               <div key={manga._id || idx} className="bg-[#232a32] rounded-lg truncate shadow-lg transition-transform duration-300 hover:scale-105">
                 <Link
