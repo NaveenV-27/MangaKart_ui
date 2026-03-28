@@ -16,7 +16,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const cartFetched = useRef(false);
 
   useEffect(() => {
-    console.log("Use effect running")
     setIsAuthPage(pathname === "/login" || pathname === "/signup" || pathname === "/admin/login" || pathname === "/admin/signup");
   }, [pathname]);
 

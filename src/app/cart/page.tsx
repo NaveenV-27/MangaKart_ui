@@ -156,7 +156,7 @@ const CartPage = () => {
                     {item.quantity > 1 && (
                       <button
                         onClick={() => handleRemoveItem(item)}
-                        className='text-red-400 hover:text-red-500 transition-colors cursor-pointer cursor-pointer'
+                        className='text-red-400 hover:text-red-500 transition-colors cursor-pointer'
                         aria-label="Remove item"
                       >
                         <FaTrash size={20} />

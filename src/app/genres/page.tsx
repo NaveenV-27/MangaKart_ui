@@ -1,5 +1,7 @@
+"use client";
+import axios from "axios";
 import Link from "next/link";
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 const genreColors: { [key: string]: string } = {
   Action: "hsla(0, 70%, 30%, 0.85)",
@@ -28,8 +30,97 @@ const genreColors: { [key: string]: string } = {
   "Josei-manga": "hsla(280, 70%, 50%, 0.85)",
 };
 
+const genreIds: { [key: string]: number } = {
+  Action: 1,
+  Adventure: 2,
+  Comedy: 4,
+  Drama: 8,
+  Fantasy: 10,
+  Horror: 14,
+  Mystery: 7,
+  Romance: 22,
+  "Sci-Fi": 24,
+  "Slice of Life": 36,
+  Sports: 30,
+  Supernatural: 37,
+  Ecchi: 9,
+  Harem: 35,
+  Isekai: 62,
+  Mecha: 18,
+  Psychological: 40,
+  Thriller: 41,
+};
+
 const page = () => {
   const genres = Object.keys(genreColors);
+
+  const getRandomImages = async (): Promise<string[]> => {
+    try {
+      const response = await axios.get(
+        "https://api.jikan.moe/v4/anime",
+        {
+          params: {
+            order_by: "popularity",
+            limit: 20,
+          },
+          timeout: 5000, // prevent hanging
+        }
+      );
+
+      const data = response?.data?.data;
+
+      if (!Array.isArray(data)) {
+        throw new Error("Invalid API response structure");
+      }
+
+      // Extract safely
+      const images = data
+        .map((anime: any) => anime?.images?.jpg?.large_image_url)
+        .filter(Boolean); // remove undefined/null
+
+      return images;
+    } catch (error: any) {
+      console.error("Failed to fetch anime images:", {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+
+      // graceful fallback (important)
+      return [];
+    }
+  };
+
+  const [images, setImages] = useState<string[]>([]);
+
+  useEffect(() => {
+  const loadImages = async () => {
+    try {
+      // 🔥 cache first
+      const cached = localStorage.getItem("genreImages");
+      if (cached) {
+        setImages(JSON.parse(cached));
+        return;
+      }
+
+      const imgs = await getRandomImages();
+
+      if (imgs.length > 0) {
+        setImages(imgs);
+        localStorage.setItem("genreImages", JSON.stringify(imgs));
+      }
+    } catch (err) {
+      console.error("Image load failed:", err);
+    }
+  };
+
+  loadImages();
+}, []);
+
+const getImageForGenre = (index: number) => {
+  if (!images || images.length === 0) return null;
+  return images[index % images.length];
+};
 
   return (
     <div className="min-h-screen bg-slate-900 px-6 py-12">
@@ -45,7 +136,7 @@ const page = () => {
 
       {/* Genre Grid */}
       <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-6">
-        {genres.map((genre) => {
+        {genres.map((genre, index) => {
           const bgColor =
             genreColors[genre] || "hsla(0, 0%, 20%, 0.8)";
 
@@ -59,14 +150,23 @@ const page = () => {
                          hover:scale-[1.03] hover:border-slate-500"
             >
               <div
-                className="h-28 flex items-center justify-center text-center
-                           text-slate-100 font-medium tracking-wide px-3"
-                style={{ backgroundColor: bgColor }}
-              >
-                <span className="text-lg group-hover:tracking-wider transition-all">
-                  {genre}
-                </span>
-              </div>
+  className="h-28 flex items-center justify-center text-center
+             text-white font-medium tracking-wide px-3
+             bg-cover bg-center relative"
+  style={{
+    backgroundImage: getImageForGenre(index)
+      ? `url(${getImageForGenre(index)})`
+      : undefined,
+    backgroundColor: bgColor,
+  }}
+>
+  {/* Dark overlay for readability */}
+  <div className="absolute inset-0 bg-black/50" />
+
+  <span className="relative z-10 text-lg group-hover:tracking-wider transition-all">
+    {genre}
+  </span>
+</div>
 
               {/* subtle overlay for polish */}
               <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity" />

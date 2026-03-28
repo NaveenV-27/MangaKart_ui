@@ -1,8 +1,6 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
 
-// 1. Define the CartItem and CartState interfaces
-// Match backend CartItemInput structure
 export interface CartItem {
     volume_id: string;
     manga_title: string;

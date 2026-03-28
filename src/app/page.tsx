@@ -1,8 +1,25 @@
+"use client"
+
+import { useEffect, useState } from "react";
 import Carousel from "./components/Carousel";
 import MangaList from "./components/MangaList";
 import RandomVolumes from "./components/RandomVolumes";
 
 export default function Home() {
+  const [isLoading, setIsLoading] = useState<Boolean>(true);
+  useEffect(()=> {
+    setIsLoading(false);
+  }, []);
+  if(isLoading) {
+    return (
+      <div className="flex-center text-xl h-screen">
+        <div className="w-12 h-12 border-4 border-slate-600 border-t-transparent rounded-full animate-spin" />
+        <p className="text-slate-500 text-sm tracking-wide">
+          Loading...
+        </p>
+      </div>
+    )
+  }
   return (
     <div className="flex flex-col font-sans items-center justify-center h-full min-w-full">
       {/* <h1 className="text-3xl">Hello Every one! this is mangakart</h1> */}
