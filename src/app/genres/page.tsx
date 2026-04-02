@@ -2,180 +2,147 @@
 import axios from "axios";
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
+import { Layers, Loader2, Sparkles, ChevronRight } from "lucide-react";
 
 const genreColors: { [key: string]: string } = {
-  Action: "hsla(0, 70%, 30%, 0.85)",
-  Adventure: "hsla(45, 70%, 30%, 0.85)",
-  Comedy: "hsla(60, 70%, 30%, 0.85)",
-  Drama: "hsla(240, 70%, 30%, 0.85)",
-  Fantasy: "hsla(270, 70%, 30%, 0.85)",
-  Horror: "hsla(300, 70%, 15%, 0.85)",
-  Mystery: "hsla(210, 70%, 25%, 0.85)",
-  Romance: "hsla(330, 70%, 40%, 0.85)",
-  "Sci-Fi": "hsla(200, 70%, 20%, 0.85)",
-  "Slice of Life": "hsla(120, 30%, 35%, 0.85)",
-  Sports: "hsla(150, 70%, 30%, 0.85)",
-  Supernatural: "hsla(340, 70%, 25%, 0.85)",
-  Ecchi: "hsla(30, 70%, 40%, 0.85)",
-  Harem: "hsla(315, 70%, 35%, 0.85)",
-  Isekai: "hsla(280, 70%, 30%, 0.85)",
-  Mecha: "hsla(190, 70%, 30%, 0.85)",
-  Psychological: "hsla(250, 70%, 20%, 0.85)",
-  Thriller: "hsla(20, 70%, 25%, 0.85)",
-  "Yaoi (Boys' Love)": "hsla(260, 70%, 45%, 0.85)",
-  "Yuri (Girls' Love)": "hsla(330, 70%, 45%, 0.85)",
-  "Shonen-manga": "hsla(10, 70%, 40%, 0.85)",
-  "Shojo-manga": "hsla(300, 70%, 50%, 0.85)",
-  "Seinen-manga": "hsla(240, 70%, 40%, 0.85)",
-  "Josei-manga": "hsla(280, 70%, 50%, 0.85)",
+  Action: "from-red-600/20",
+  Adventure: "from-orange-600/20",
+  Comedy: "from-yellow-600/20",
+  Drama: "from-blue-600/20",
+  Fantasy: "from-purple-600/20",
+  Horror: "from-slate-800/20",
+  Mystery: "from-indigo-600/20",
+  Romance: "from-rose-600/20",
+  "Sci-Fi": "from-cyan-600/20",
+  "Slice of Life": "from-emerald-600/20",
+  Sports: "from-blue-500/20",
+  Supernatural: "from-violet-600/20",
 };
 
-const genreIds: { [key: string]: number } = {
-  Action: 1,
-  Adventure: 2,
-  Comedy: 4,
-  Drama: 8,
-  Fantasy: 10,
-  Horror: 14,
-  Mystery: 7,
-  Romance: 22,
-  "Sci-Fi": 24,
-  "Slice of Life": 36,
-  Sports: 30,
-  Supernatural: 37,
-  Ecchi: 9,
-  Harem: 35,
-  Isekai: 62,
-  Mecha: 18,
-  Psychological: 40,
-  Thriller: 41,
-};
-
-const page = () => {
+const GenresPage = () => {
   const genres = Object.keys(genreColors);
+  const [images, setImages] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const getRandomImages = async (): Promise<string[]> => {
     try {
-      const response = await axios.get(
-        "https://api.jikan.moe/v4/anime",
-        {
-          params: {
-            order_by: "popularity",
-            limit: 20,
-          },
-          timeout: 5000, // prevent hanging
-        }
-      );
-
-      const data = response?.data?.data;
-
-      if (!Array.isArray(data)) {
-        throw new Error("Invalid API response structure");
-      }
-
-      // Extract safely
-      const images = data
-        .map((anime: any) => anime?.images?.jpg?.large_image_url)
-        .filter(Boolean); // remove undefined/null
-
-      return images;
-    } catch (error: any) {
-      console.error("Failed to fetch anime images:", {
-        message: error.message,
-        status: error.response?.status,
-        data: error.response?.data,
+      const response = await axios.get("https://api.jikan.moe/v4/top/anime", {
+        params: { limit: 24 },
+        timeout: 5000,
       });
-
-      // graceful fallback (important)
+      return response?.data?.data
+        .map((anime: any) => anime?.images?.jpg?.large_image_url)
+        .filter(Boolean);
+    } catch (error) {
+      console.error("Failed to fetch anime images:", error);
       return [];
     }
   };
 
-  const [images, setImages] = useState<string[]>([]);
-
   useEffect(() => {
-  const loadImages = async () => {
-    try {
-      // 🔥 cache first
-      const cached = localStorage.getItem("genreImages");
-      if (cached) {
-        setImages(JSON.parse(cached));
-        return;
+    const loadImages = async () => {
+      setIsLoading(true);
+      try {
+        const cached = localStorage.getItem("genreImages");
+        if (cached) {
+          setImages(JSON.parse(cached));
+        } else {
+          const imgs = await getRandomImages();
+          if (imgs.length > 0) {
+            setImages(imgs);
+            localStorage.setItem("genreImages", JSON.stringify(imgs));
+          }
+        }
+      } catch (err) {
+        console.error("Image load failed:", err);
+      } finally {
+        // Small delay for smooth entry
+        setTimeout(() => setIsLoading(false), 500);
       }
+    };
+    loadImages();
+  }, []);
 
-      const imgs = await getRandomImages();
-
-      if (imgs.length > 0) {
-        setImages(imgs);
-        localStorage.setItem("genreImages", JSON.stringify(imgs));
-      }
-    } catch (err) {
-      console.error("Image load failed:", err);
-    }
+  const getImageForGenre = (index: number) => {
+    if (!images || images.length === 0) return null;
+    return images[index % images.length];
   };
 
-  loadImages();
-}, []);
-
-const getImageForGenre = (index: number) => {
-  if (!images || images.length === 0) return null;
-  return images[index % images.length];
-};
-
   return (
-    <div className="min-h-screen bg-slate-900 px-6 py-12">
-      {/* Header */}
-      <div className="max-w-7xl mx-auto mb-10">
-        <h1 className="text-3xl font-semibold text-slate-100">
-          Browse by Genre
-        </h1>
-        <p className="text-slate-400 mt-2">
-          Discover manga by your favorite genres
-        </p>
+    <div className="min-h-screen bg-slate-950 text-slate-200 pb-20">
+      {/* Header Section */}
+      <div className="bg-slate-900 border-b border-slate-800 py-16 px-6 mb-12">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="p-3 bg-indigo-600/10 rounded-2xl">
+              <Layers className="text-indigo-500" size={32} />
+            </div>
+            <div>
+              <h1 className="text-4xl md:text-6xl font-black text-white uppercase italic tracking-tighter">
+                Browse Genres
+              </h1>
+              <p className="text-slate-400 mt-2 text-lg font-medium">
+                Target your interests across the multi-verse library.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Genre Grid */}
-      <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-6">
-        {genres.map((genre, index) => {
-          const bgColor =
-            genreColors[genre] || "hsla(0, 0%, 20%, 0.8)";
+      <div className="max-w-7xl mx-auto px-6">
+        {isLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 animate-pulse">
+            {[...Array(12)].map((_, i) => (
+              <div key={i} className="h-40 bg-slate-900 rounded-[2rem] border border-slate-800" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {genres.map((genre, index) => {
+              const bgGradient = genreColors[genre] || "from-indigo-600/20";
+              const genreImage = getImageForGenre(index);
 
-          return (
-            <Link
-              key={genre}
-              href={`/genres/${encodeURIComponent(genre)}`}
-              className="group relative rounded-xl overflow-hidden
-                         border border-slate-700
-                         transition-all duration-300
-                         hover:scale-[1.03] hover:border-slate-500"
-            >
-              <div
-  className="h-28 flex items-center justify-center text-center
-             text-white font-medium tracking-wide px-3
-             bg-cover bg-center relative"
-  style={{
-    backgroundImage: getImageForGenre(index)
-      ? `url(${getImageForGenre(index)})`
-      : undefined,
-    backgroundColor: bgColor,
-  }}
->
-  {/* Dark overlay for readability */}
-  <div className="absolute inset-0 bg-black/50" />
+              return (
+                <Link
+                  key={genre}
+                  href={`/genres/${encodeURIComponent(genre)}`}
+                  className="group relative h-40 rounded-[2rem] overflow-hidden border border-slate-800 transition-all duration-500 hover:scale-[1.02] hover:border-indigo-500/50 shadow-xl"
+                >
+                  {/* Background Image with Ken Burns Effect */}
+                  {genreImage && (
+                    <div 
+                      className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-110"
+                      style={{ backgroundImage: `url(${genreImage})` }}
+                    />
+                  )}
 
-  <span className="relative z-10 text-lg group-hover:tracking-wider transition-all">
-    {genre}
-  </span>
-</div>
+                  {/* Thematic Overlays */}
+                  <div className={`absolute inset-0 bg-gradient-to-br ${bgGradient} to-slate-950/90 backdrop-blur-[2px] transition-colors group-hover:backdrop-blur-none`} />
+                  <div className="absolute inset-0 bg-slate-950/40" />
 
-              {/* subtle overlay for polish */}
-              <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </Link>
-          );
-        })}
+                  {/* Content */}
+                  <div className="relative z-10 h-full p-6 flex flex-col justify-between">
+                    <div className="flex justify-between items-start">
+                       <Sparkles className="text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity" size={16} />
+                       <ChevronRight className="text-slate-500 group-hover:text-white transition-all transform group-hover:translate-x-1" size={20} />
+                    </div>
+                    
+                    <div>
+                      <span className="block text-xl font-black text-white uppercase italic tracking-tight group-hover:text-indigo-300 transition-colors">
+                        {genre}
+                      </span>
+                      <div className="w-8 h-1 bg-indigo-600 mt-2 rounded-full transition-all group-hover:w-16" />
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-export default page;
+export default GenresPage;

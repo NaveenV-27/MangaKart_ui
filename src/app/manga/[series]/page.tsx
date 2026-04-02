@@ -1,44 +1,24 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import axios from 'axios';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Star, ShoppingCart } from 'lucide-react';
+import { Star, ShoppingCart, Loader2, BookOpen, Layers, ChevronLeft, Info, Calendar } from 'lucide-react';
 import { useDispatch } from 'react-redux';
 import { addToCartDb } from '../../redux/slices/cartSlice';
 import { AppDispatch } from '../../redux/store/store';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 
-interface MangaData {
-  _id: string;
-  manga_id: string;
-  title: string;
-  description: string;
-  authors: string[];
-  genres: string[];
-  cover_image: string;
-  gallery: string[];
-  rating: number;
-}
-
-interface VolumeData {
-  _id: string;
-  volume_id: string; 
-  volume_title: string;
-  cover_image: string;
-  volume_number: number;
-  price: number;
-}
-
-const Page = () => {
+const SeriesPage = () => {
   const params = useParams();
+  const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   
-  const [mangaData, setMangaData] = useState<MangaData | null>(null);
-  const [volumes, setVolumes] = useState<VolumeData[]>([]);
+  const [mangaData, setMangaData] = useState<any | null>(null);
+  const [volumes, setVolumes] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [volumesLoading, setVolumesLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,12 +26,9 @@ const Page = () => {
 
   const mangaName: string = typeof params.series === "string" ? params.series.replace(/-/g, " ") : "";
 
-  // Fetch manga details
   useEffect(() => {
     const fetchMangaDetails = async () => {
       setIsLoading(true);
-      setError(null);
-      
       try {
         if (mangaName) { 
           const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/manga/get_single_manga`, {
@@ -60,226 +37,168 @@ const Page = () => {
           setMangaData(response.data);
         }
       } catch (err) {
-        console.error("Error fetching manga details:", err);
-        setError("Failed to load manga details. Please check the URL.");
+        setError("Archives unreachable.");
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchMangaDetails();
   }, [mangaName]);
 
-  // Fetch volumes when mangaData is available
   useEffect(() => {
     const fetchVolumes = async () => {
       if (!mangaData?.manga_id) return;
-      
       setVolumesLoading(true);
       try {
-        console.log("Mangadata:", mangaData)
         const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/volumes/get_volumes_by_manga`, {
           manga_id: mangaData.manga_id,
         });
-        console.log("Volume response:", response.data);
         if (response.data.success === 1) {
           setVolumes(response.data.volumes || []);
         }
-      } catch (err) {
-        console.error("Error fetching volumes:", err);
-      } finally {
-        setVolumesLoading(false);
-      }
+      } catch (err) { console.error(err); } finally { setVolumesLoading(false); }
     };
-
     fetchVolumes();
   }, [mangaData?.manga_id]);
 
-  const handleAddToCart = async (volume: VolumeData) => {
-    if (!mangaData) return;
-    
-    setAddingToCart(volume.volume_id);
-    
-    // Backend requires: volume_id, manga_title, volume_title, type, cover_image, price, quantity
-    try {
-      await dispatch(addToCartDb({ 
-        volume_id: volume.volume_id,
-        manga_title: mangaData.title,
-        volume_title: volume.volume_title,
-        type: "volume",
-        cover_image: volume.cover_image,
-        price: volume.price,
-        quantity: 1 
-      })).unwrap();
-    } catch (err) {
-      console.error("Failed to add to cart:", err);
-    } finally {
-      setAddingToCart(null);
-    }
-  };
-
   useGSAP(() => {
-    gsap.fromTo("#animate", {
-      opacity: 0,
-      y: 20,
-    }, {
-      opacity: 1,
-      y: 0,
-      delay: 0.2,
-      duration: 0.6
-    })
-  }, []);
+    if (!isLoading) {
+      gsap.fromTo(".fade-up", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8, stagger: 0.1 });
+    }
+  }, [isLoading]);
 
-  if (isLoading) {
-    return (
-      <div id='animate' className="flex-center h-[79vh] text-gray-400 text-xl">
-        Loading manga details...
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div id='animate' className="flex-center h-[79vh] text-red-400 text-xl">
-        {error}
-      </div>
-    );
-  }
-
-  if (!mangaData) {
-    return (
-      <div id='animate' className="flex-center h-[79vh] text-gray-400 text-xl">
-        Manga not found.
-      </div>
-    );
-  }
+  if (isLoading) return (
+    <div className="flex flex-col justify-center items-center h-[80vh] bg-slate-950">
+      <Loader2 className="animate-spin text-indigo-500 mb-4" size={40} />
+      <p className="font-mono text-xs uppercase tracking-widest text-slate-500">Retrieving Series Data...</p>
+    </div>
+  );
 
   return (
-    <div id='animate' className="container mx-auto p-4 md:p-8 text-gray-300">
-      <div className="bg-[#1b2531] rounded-lg shadow-2xl p-6 md:p-8">
-        {/* Top Section: Image and Info */}
-        <div className="flex flex-col md:flex-row gap-8 mb-8">
-          {/* Image */}
-          <div className="flex-shrink-0 w-full md:w-1/3">
-            <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-2xl">
-              <Image
-                src={mangaData.cover_image}
-                alt={`${mangaData.title} Cover`}
-                fill
-                style={{ objectFit: 'contain' }}
-                className="rounded-lg bg-gray-900"
-              />
+    <div className="min-h-screen bg-slate-950 text-slate-200 pb-20">
+      
+      {/* 1. LANDSCAPE HERO SECTION */}
+      <div className="relative w-full max-w-[1400px] mx-auto pt-6 px-4 md:px-8">
+        <div className="relative w-full aspect-video md:aspect-[21/9] rounded-[2.5rem] overflow-hidden border border-slate-800 shadow-2xl fade-up">
+          {/* Main Landscape Image */}
+          <Image 
+            src={mangaData.cover_image} 
+            alt={mangaData.title} 
+            fill 
+            className="object-cover transition-transform duration-[10s] hover:scale-105" 
+            priority 
+          />
+          
+          {/* Overlays for Text Readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-transparent to-transparent hidden md:block" />
+
+          {/* Floating Content over Image */}
+          <div className="absolute bottom-0 left-0 w-full p-8 md:p-12">
+            <div className="max-w-3xl">
+                <div className="flex items-center gap-3 mb-4">
+                    <span className="px-3 py-1 bg-indigo-600 text-white rounded-lg text-[10px] font-black uppercase tracking-widest">
+                        Featured Series
+                    </span>
+                    <div className="flex items-center gap-1 text-yellow-500 font-bold bg-slate-950/50 backdrop-blur-md px-2 py-1 rounded-md border border-white/10">
+                        <Star size={14} fill="currentColor" /> {mangaData.rating}
+                    </div>
+                </div>
+                <h1 className="text-4xl md:text-7xl font-black text-white uppercase italic tracking-tighter leading-none mb-4 drop-shadow-2xl">
+                    {mangaData.title}
+                </h1>
+                <p className="text-slate-300 font-bold uppercase text-xs tracking-widest flex items-center gap-2">
+                    Curated by <span className="text-indigo-400">{mangaData.authors.join(', ')}</span>
+                </p>
             </div>
           </div>
-          {/* Info Section */}
-          <div className="flex-1 mt-6 md:mt-0">
-            <h1 className="text-4xl font-bold text-white mb-2">{mangaData.title}</h1>
-            <div className="flex items-center text-yellow-400 mb-4">
-              <Star size={24} fill="currentColor" strokeWidth={0} />
-              <span className="ml-2 font-semibold text-xl">{mangaData.rating}</span>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 md:px-12 mt-16 grid grid-cols-1 lg:grid-cols-12 gap-16">
+        
+        {/* Left Column: Dossier */}
+        <div className="lg:col-span-8 space-y-12 fade-up">
+          <section className="bg-slate-900/40 border border-slate-800 p-8 rounded-[2rem] backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-6">
+              <Info className="text-indigo-500" size={20} />
+              <h2 className="text-xl font-black text-white uppercase tracking-tight italic">Story Brief</h2>
             </div>
-            <p className="text-sm text-gray-400 mb-2">
-              <span className="font-semibold text-white">Authors:</span> {mangaData.authors.join(', ')}
+            <p className="text-slate-400 leading-relaxed text-lg italic whitespace-pre-wrap">
+              "{mangaData.description}"
             </p>
-            <div className="flex flex-wrap gap-2">
-              {mangaData.genres.map((genre, index) => (
-                <Link
-                  key={index}
-                  href={`/genres/${genre.replaceAll(" ", "-")}`}
-                  className="bg-gray-600 text-gray-200 text-xs px-3 py-1 rounded-full hover:bg-gray-500 transition-colors"
-                >
+            
+            <div className="flex flex-wrap gap-2 mt-10">
+              {mangaData.genres.map((genre: string, i: number) => (
+                <Link key={i} href={`/genres/${genre.replace(/ /g, "-")}`} className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-[10px] font-black text-slate-400 hover:text-indigo-400 hover:border-indigo-500 transition-all uppercase tracking-widest">
                   {genre}
                 </Link>
               ))}
             </div>
-          </div>
-        </div>
+          </section>
 
-        {/* Description Section (Full Width) */}
-        <div className="w-full">
-          <h3 className="text-2xl font-bold text-white mb-4">Description</h3>
-          <p className="text-gray-400 leading-relaxed text-base">
-            {mangaData.description}
-          </p>
-        </div>
-
-        {/* Gallery Section */}
-        {mangaData.gallery && mangaData.gallery.length > 0 && (
-          <div className="w-full mt-8">
-            <h3 className="text-2xl font-bold text-white mb-4">Gallery</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {mangaData.gallery.map((imgUrl, index) => (
-                <div key={index} className="relative w-full aspect-video rounded-lg overflow-hidden">
-                  <Image
-                    src={imgUrl}
-                    alt={`Gallery image ${index + 1}`}
-                    fill
-                    style={{ objectFit: 'cover' }}
-                    className="rounded-lg"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Volumes Section */}
-      <div className="mt-8">
-        <h3 className="text-2xl font-bold text-white mb-6">Volumes</h3>
-        
-        {volumesLoading ? (
-          <div className="flex-center py-8 text-gray-400">
-            Loading volumes...
-          </div>
-        ) : volumes.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-            {volumes.map((volume) => (
-              <div 
-                key={volume.volume_id} 
-                className="bg-[#1b2531] rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow"
-              >
-                <Link href={`/volume/${volume.volume_id}`}>
-                  {/* Volume Cover */}
-                  <div className="relative w-full aspect-[2/3] bg-gray-800">
-                    <Image
-                      src={volume.cover_image}
-                      alt={volume.volume_title}
-                      fill
-                      style={{ objectFit: 'cover' }}
-                      className="rounded-t-lg"
-                    />
-                  </div>
-                  
-                  {/* Volume Info */}
-                  <div className="p-3">
-                    <p className="text-xs text-gray-400 mb-1">Vol. {volume.volume_number}</p>
-                    <h4 className="text-sm font-semibold text-white truncate mb-2" title={volume.volume_title}>
-                      {volume.volume_title}
-                    </h4>
-                    <p className="text-green-400 font-bold text-lg mb-3">₹{volume.price}</p>
-                    
-                    <button
-                      onClick={() => handleAddToCart(volume)}
-                      disabled={addingToCart === volume.volume_id}
-                      className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white text-sm py-2 px-3 rounded-md transition-colors"
-                    >
-                      <ShoppingCart size={16} />
-                      {addingToCart === volume.volume_id ? 'Adding...' : 'Add to Cart'}
-                    </button>
-                  </div>
-                </Link>
+          {/* Gallery - Still works great for Landscape */}
+          {mangaData.gallery?.length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-6 ml-2">
+                <Layers className="text-indigo-500" size={20} />
+                <h2 className="text-xl font-black text-white uppercase tracking-tight italic">Visual Archives</h2>
               </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {mangaData.gallery.map((imgUrl: string, i: number) => (
+                  <div key={i} className="relative aspect-video rounded-3xl overflow-hidden border border-slate-800 group shadow-xl">
+                    <Image src={imgUrl} alt="Gallery" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+
+        {/* Right Column: Volumes (Keep these Portrait for consistency) */}
+        <div className="lg:col-span-4 fade-up">
+          <div className="flex items-center justify-between mb-8 px-2">
+            <div className="flex items-center gap-2">
+              <BookOpen className="text-indigo-500" size={20} />
+              <h2 className="text-xl font-black text-white uppercase tracking-tight italic">Volumes</h2>
+            </div>
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{volumes.length} Units</span>
+          </div>
+
+          <div className="space-y-4">
+            {volumes.map((volume) => (
+              <Link 
+                key={volume.volume_id} 
+                href={`/volume/${volume.volume_id}`}
+                className="group block bg-slate-900 border border-slate-800 rounded-3xl p-3 transition-all hover:border-indigo-500/50 hover:shadow-lg hover:shadow-indigo-500/5"
+              >
+                <div className="flex gap-4">
+                  {/* Volumes usually have portrait covers even if series have landscape banners */}
+                  <div className="relative w-20 h-28 rounded-2xl overflow-hidden shrink-0 shadow-lg border border-slate-800">
+                    <Image src={volume.cover_image} alt={volume.volume_title} fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
+                  </div>
+                  <div className="flex flex-col justify-between flex-1 min-w-0 py-1">
+                    <div>
+                      <p className="text-[10px] font-black text-indigo-400 uppercase mb-1">Release #{volume.volume_number}</p>
+                      <h4 className="text-base font-bold text-white truncate leading-tight group-hover:text-indigo-300 transition-colors">
+                        {volume.volume_title}
+                      </h4>
+                    </div>
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-xl font-black text-white font-mono">₹{volume.price}</span>
+                      <div className="p-2 bg-slate-800 group-hover:bg-indigo-600 text-slate-400 group-hover:text-white rounded-xl transition-all">
+                        <ShoppingCart size={16} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Link>
             ))}
           </div>
-        ) : (
-          <div className="bg-[#1b2531] rounded-lg p-8 text-center text-gray-400">
-            No volumes available for this manga yet.
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );
 };
 
-export default Page;
+export default SeriesPage;

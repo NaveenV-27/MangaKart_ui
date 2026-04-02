@@ -1,108 +1,89 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { TrendingUp } from 'lucide-react';
+import { TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
-// import onepiece from "@/public/covers/onepiece.jpg";
-// import naruto from "@/public/covers/naruto.jpg";
-// import dragonball from "@/public/covers/dragonball.jpg";
 
 interface SlideItem {
-  img: string; // Using `any` for simplicity with StaticImageData
+  img: string;
   name: string;
   rating: string;
+  tag: string;
 }
 
 const list: SlideItem[] = [
-  { img: "https://res.cloudinary.com/mangakart/image/upload/v1758189872/uploads/sxevyu3z8w7rb3vfsudp.avif", name: "One Piece", rating: "9.7" },
-  { img: "https://res.cloudinary.com/mangakart/image/upload/v1758190467/uploads/wsnmtkqbbdnmmlkcgqc0.avif", name: "Dragon Ball", rating: "9.3" },
-  { img: "https://res.cloudinary.com/mangakart/image/upload/v1758190322/uploads/uiijxsxxda7n15uhdngb.avif", name: "Naruto", rating: "8.9" },
+  { img: "https://res.cloudinary.com/mangakart/image/upload/v1758189872/uploads/sxevyu3z8w7rb3vfsudp.avif", name: "One Piece", rating: "9.7", tag: "Adventure" },
+  { img: "https://res.cloudinary.com/mangakart/image/upload/v1758190467/uploads/wsnmtkqbbdnmmlkcgqc0.avif", name: "Dragon Ball", rating: "9.3", tag: "Classic" },
+  { img: "https://res.cloudinary.com/mangakart/image/upload/v1758190322/uploads/uiijxsxxda7n15uhdngb.avif", name: "Naruto", rating: "8.9", tag: "Ninja Saga" },
 ];
 
-const AUTO_SLIDE_INTERVAL = 3000; // Auto-slide interval in milliseconds
+const AUTO_SLIDE_INTERVAL = 5000;
 
-const Card = () => {
+const HeroCarousel = () => {
   const [index, setIndex] = useState<number>(0);
   const [isPaused, setIsPaused] = useState<boolean>(false);
 
   useGSAP(() => {
-    gsap.fromTo("#animate", {
+    gsap.fromTo("#hero-animate", {
       opacity: 0,
-      y: 20,
+      scale: 0.95,
     }, {
       opacity: 1,
-      y: 0,
-      delay: 0.2,
-      duration: 0.6
-    })
+      scale: 1,
+      duration: 1,
+      ease: "power2.out"
+    });
   }, []);
 
-  // // Auto-slide functionality
+  const nextSlide = useCallback((): void => {
+    setIndex((prev) => (prev === list.length - 1 ? 0 : prev + 1));
+  }, []);
+
+  const prevSlide = useCallback((): void => {
+    setIndex((prev) => (prev === 0 ? list.length - 1 : prev - 1));
+  }, []);
+
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
     if (!isPaused) {
-      interval = setInterval(() => {
-        nextSlide();
-      }, AUTO_SLIDE_INTERVAL);
+      interval = setInterval(nextSlide, AUTO_SLIDE_INTERVAL);
     }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [index, isPaused]);
+    return () => { if (interval) clearInterval(interval); };
+  }, [index, isPaused, nextSlide]);
 
-  // Keyboard navigation
-  
-  const prevSlide = (): void => {
-    setIndex(index === 0 ? list.length - 1 : index - 1);
-  };
-  
-  const nextSlide = (): void => {
-    setIndex(index === list.length - 1 ? 0 : index + 1);
-  };
-  
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft") {
-        prevSlide();
-      } else if (e.key === "ArrowRight") {
-        nextSlide();
-      }
+      if (e.key === "ArrowLeft") prevSlide();
+      if (e.key === "ArrowRight") nextSlide();
     };
     window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [index, nextSlide, prevSlide]);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [nextSlide, prevSlide]);
 
   return (
     <div 
-      id='animate'
-      className="relative w-full max-w-screen-lg mt-4 mx-auto overflow-hidden group"
-      role="region"
-      aria-roledescription="carousel"
+      id='hero-animate'
+      className="relative w-full max-w-[1400px] mt-6 mx-auto overflow-hidden rounded-3xl group border border-slate-800 shadow-2xl"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
+      {/* Trending Badge */}
+      <div className="absolute top-6 left-8 z-30 flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-full text-xs font-black uppercase tracking-widest shadow-lg shadow-indigo-500/40">
+        <TrendingUp size={14} />
+        Trending Now
+      </div>
+
       <div
-        className="flex transition-transform duration-500"
+        className="flex transition-transform duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]"
         style={{ transform: `translateX(-${index * 100}%)` }}
       >
-        <div className="absolute top-4 left-6 text-amber-100 font-serif font-bold bg-slate-700 p-2 md:p-4 rounded-md z-10">
-          Trending Right Now
-          <TrendingUp className='inline-block ml-2' />
-        </div> 
-
         {list.map((item, i) => (
           <div 
             key={i} 
-            className="relative w-full flex-shrink-0 h-[300px] md:h-[500px] lg:h-[600px] overflow-hidden"
-            role="group"
-            aria-roledescription="slide"
-            aria-label={`${i + 1} of ${list.length}`}
-            aria-hidden={i !== index}
+            className="relative w-full flex-shrink-0 h-[400px] md:h-[600px] overflow-hidden"
           >
             <Link 
               href={`/manga/${item.name.replace(" ", "-")}`} 
@@ -110,65 +91,68 @@ const Card = () => {
             >
               <Image
                 src={item.img}
-                alt={`${item.name} cover image`}
+                alt={item.name}
                 fill
-                priority={i === 0} // Prioritize first image for faster loading
-                style={{ objectFit: "cover" }}
-                className="w-full h-full"
+                priority={i === 0}
+                className="object-cover transition-transform duration-[10s] group-hover:scale-110"
               />
-              <div className="absolute inset-0 bg-black/40"></div>
-              <div className="absolute bottom-6 left-6 text-white z-10">
-                <h2 className="text-3xl md:text-5xl font-serif font-bold mb-2">
+              
+              {/* Cinematic Overlays */}
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-slate-950/60 via-transparent to-transparent"></div>
+
+              {/* Content */}
+              <div className="absolute bottom-12 left-8 md:left-12 z-10 max-w-2xl">
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="px-3 py-1 bg-white/10 backdrop-blur-md border border-white/20 rounded-md text-[10px] font-bold text-white uppercase tracking-widest">
+                    {item.tag}
+                  </span>
+                  <div className="flex items-center gap-1 text-amber-400 font-bold">
+                    <span className="text-sm">⭐ {item.rating}</span>
+                  </div>
+                </div>
+                
+                <h2 className="text-5xl md:text-7xl font-black text-white mb-4 uppercase italic tracking-tighter leading-none">
                   {item.name}
                 </h2>
-                <span className="text-lg md:text-2xl font-semibold">
-                  ⭐ {item.rating}/10
-                </span>
+                
+                <button className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition-all shadow-xl shadow-indigo-600/20 text-sm uppercase tracking-widest cursor-pointer">
+                  View Series
+                </button>
               </div>
             </Link>
           </div>
         ))}
       </div>
 
+      {/* Navigation Arrows */}
       <button
         onClick={prevSlide}
-        className="absolute top-1/2 left-4 transform -translate-y-1/2 text-white bg-black/50 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-20 hover:scale-125 cursor-pointer"
-        aria-label="Previous slide"
+        className="absolute top-1/2 left-4 -translate-y-1/2 w-12 h-12 flex items-center justify-center bg-slate-900/50 backdrop-blur-xl text-white rounded-full border border-white/10 opacity-0 group-hover:opacity-100 transition-all hover:bg-indigo-600 z-30 cursor-pointer"
       >
-        &#8249;
+        <ChevronLeft size={24} />
       </button>
       <button
         onClick={nextSlide}
-        className="absolute top-1/2 right-4 transform -translate-y-1/2 text-white bg-black/50 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-20 hover:scale-125 cursor-pointer"
-        aria-label="Next slide"
+        className="absolute top-1/2 right-4 -translate-y-1/2 w-12 h-12 flex items-center justify-center bg-slate-900/50 backdrop-blur-xl text-white rounded-full border border-white/10 opacity-0 group-hover:opacity-100 transition-all hover:bg-indigo-600 z-30 cursor-pointer"
       >
-        &#8250;
+        <ChevronRight size={24} />
       </button>
 
-      {/* <button
-        onClick={() => setIsPaused(!isPaused)}
-        className="absolute top-4 right-4 text-white bg-black/50 p-2 rounded-full z-20"
-        aria-label={isPaused ? "Start auto-play" : "Pause auto-play"}
-      >
-        {isPaused ? <Play size={20} /> : <Pause size={20} />}
-      </button> */}
-
-      <div className='flex justify-center items-center p-4 gap-4 absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20'>
+      {/* Indicators */}
+      <div className='flex justify-center items-center gap-3 absolute bottom-6 right-8 z-30'>
         {list.map((_, i) => (
-          <div 
+          <button 
             key={i} 
-            className={`h-1 w-8 cursor-pointer transition-all ${
-              index === i ? 'bg-white scale-125' : 'bg-slate-400'
-            }`}
             onClick={() => setIndex(i)}
-            role="button"
-            aria-label={`Go to slide ${i + 1}`}
-            aria-current={index === i}
-          ></div>
+            className={`h-1.5 transition-all duration-300 rounded-full ${
+              index === i ? 'w-12 bg-indigo-500 shadow-[0_0_10px_#6366f1]' : 'w-4 bg-slate-600 hover:bg-slate-400'
+            }`}
+          ></button>
         ))}
       </div>
     </div>
   );
 };
 
-export default Card;
+export default HeroCarousel;

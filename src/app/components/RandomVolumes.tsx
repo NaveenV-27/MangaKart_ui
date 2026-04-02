@@ -3,7 +3,7 @@ import axios from 'axios';
 import React, { useState, useEffect } from 'react';
 import Image from "next/image";
 import Link from 'next/link';
-import { ShoppingCart } from 'lucide-react'; // Using ShoppingCart icon for Buy/View
+import { ShoppingCart, Loader2, Sparkles } from 'lucide-react';
 
 interface VolumeProps {
   _id: string;
@@ -25,12 +25,9 @@ const RandomVolumes = () => {
   useEffect(() => {
     const fetchRandomVolumes = async () => {
       try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URL}/api/volumes/get_random_volumes`, {
-        });
-        // Set the state directly with the array from the API response
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URL}/api/volumes/get_random_volumes`);
         setVolumeList(response.data.volumes); 
       } catch (err) {
-        console.error("Error fetching random volumes:", err);
         setError("Failed to load featured volumes.");
       } finally {
         setIsLoading(false);
@@ -41,90 +38,117 @@ const RandomVolumes = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-48 text-gray-400 text-xl">
-        Loading Featured Volumes...
+      <div className="flex flex-col justify-center items-center h-64 text-slate-500 gap-3">
+        <Loader2 className="animate-spin text-indigo-500" size={32} />
+        <p className="text-sm font-medium animate-pulse">Loading Featured Volumes...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex justify-center items-center h-48 text-red-400 text-lg">
+      <div className="flex justify-center items-center h-48 text-rose-400 bg-rose-400/5 border border-rose-900/20 rounded-3xl mx-8">
         {error}
       </div>
     );
   }
 
   return (
-    <div className='p-6 md:p-10 max-w-[98vw] overflow-hidden '>
-      <h2 className='text-3xl font-bold mb-6 text-white w-full lg:ml-40'>Featured Volumes</h2>
+    <div className='py-10 px-4 md:px-0 max-w-full overflow-hidden'>
+      <div className="flex items-center gap-3 mb-8 lg:ml-40">
+        <Sparkles className="text-indigo-400" size={24} />
+        <h2 className='text-2xl md:text-3xl font-black text-white uppercase tracking-tight'>Featured Volumes</h2>
+      </div>
       
       {volumeList.length > 0 ? (
-        // === CHANGES FOR HORIZONTAL SCROLLING START HERE ===
-        <div className='flex overflow-x-scroll space-x-6 pb-4 scrollbar lg:max-w-3/4 lg:mx-40'>
-  {volumeList.map((volume) => (
-    <div
-      key={volume.volume_id}
-      className="group bg-[#232a32] rounded-lg overflow-hidden shadow-xl transition-transform duration-300 hover:scale-[1.03] flex flex-col w-[180px] sm:w-[200px] flex-shrink-0 relative"
-    >
-      {/* 1. Wrap the Image and Info in a Link */}
-      <Link href={`/volume/${volume.volume_id}`} className="flex flex-col flex-grow">
-        {/* Volume Cover */}
-        <div className="relative w-full aspect-[3/4] block flex-shrink-0">
-          <Image
-            src={volume.cover_image}
-            alt={`${volume.volume_title} Volume ${volume.volume_number}`}
-            fill
-            style={{ objectFit: 'cover' }}
-            sizes="200px"
-            className="rounded-t-lg"
-          />
+        <div className='flex overflow-x-auto space-x-6 pb-8 px-4 lg:px-0 lg:max-w-[80vw] lg:mx-40 no-scrollbar hover:scrollbar-visible transition-all'>
+          {/* Custom CSS for the scrollbar can be added to your globals.css or via a style tag below */}
+          <style jsx>{`
+            .no-scrollbar::-webkit-scrollbar {
+              height: 6px;
+            }
+            .no-scrollbar::-webkit-scrollbar-track {
+              background: #0f172a;
+            }
+            .no-scrollbar::-webkit-scrollbar-thumb {
+              background: #1e293b;
+              border-radius: 10px;
+            }
+            .no-scrollbar::-webkit-scrollbar-thumb:hover {
+              background: #4f46e5;
+            }
+          `}</style>
+
+          {volumeList.map((volume) => (
+            <div
+              key={volume.volume_id}
+              className="group bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl transition-all duration-500 hover:scale-[1.03] hover:border-indigo-500/50 flex flex-col w-[200px] sm:w-[220px] flex-shrink-0 relative"
+            >
+              {/* Card Main Link */}
+              <Link href={`/volume/${volume.volume_id}`} className="flex flex-col flex-grow">
+                {/* Volume Cover */}
+                <div className="relative w-full aspect-[3/4] overflow-hidden">
+                  <Image
+                    src={volume.cover_image}
+                    alt={volume.volume_title}
+                    fill
+                    className="object-cover transition-transform duration-700 group-hover:scale-110"
+                    sizes="220px"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-60" />
+                </div>
+
+                {/* Volume Details */}
+                <div className="p-5 flex flex-col justify-between flex-grow">
+                  <div>
+                    <h3 className='text-base font-bold text-white truncate leading-tight' title={volume.volume_title}>
+                      {volume.volume_title || `Volume ${volume.volume_number}`}
+                    </h3>
+                    <p className='text-xs text-slate-500 font-bold mt-1 uppercase tracking-widest'>
+                      VOL. {volume.volume_number}
+                    </p>
+                    <p className='text-lg font-black text-emerald-400 mt-3'>
+                      ₹{volume.price.toFixed(2)}
+                    </p>
+                  </div>
+
+                  <div className='flex items-center gap-2 mt-3'>
+                    <div className={`h-1.5 w-1.5 rounded-full ${volume.stock > 0 ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                    <p className='text-[10px] font-bold text-slate-500 uppercase tracking-tighter'>
+                      {volume.stock > 0 ? `${volume.stock} In Stock` : 'Out of Stock'}
+                    </p>
+                  </div>
+                </div>
+              </Link>
+
+              {/* Action Button */}
+              <div className="px-5 pb-5 mt-auto">
+                <Link
+                  href={`/checkout?type=volume&id=${volume.volume_id}`}
+                  className={`flex justify-center items-center w-full py-2.5 rounded-xl font-bold text-xs transition-all duration-300 relative z-10 shadow-lg ${
+                    volume.stock > 0 
+                    ? 'bg-indigo-600 text-white hover:bg-indigo-500 shadow-indigo-500/20' 
+                    : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                  }`}
+                  aria-disabled={volume.stock === 0}
+                  onClick={(e) => { 
+                    if (volume.stock === 0) e.preventDefault(); 
+                    e.stopPropagation(); 
+                  }}
+                >
+                  <ShoppingCart size={14} className='mr-2' />
+                  {volume.stock > 0 ? 'Buy Now' : 'Out of Stock'}
+                </Link>
+              </div>
+            </div>
+          ))}
         </div>
-
-        {/* Volume Details */}
-        <div className="p-4 flex flex-col justify-between flex-grow">
-          <div>
-            <h3 className='text-xl font-bold text-white truncate' title={volume.volume_title}>
-              {volume.volume_title || `Volume ${volume.volume_number}`}
-            </h3>
-            <p className='text-sm text-gray-400 mt-1'>
-              Vol. {volume.volume_number}
-            </p>
-            <p className='text-md font-semibold text-green-400 mt-2'>
-              ₹{volume.price.toFixed(2)}
-            </p>
-          </div>
-
-          <p className='text-xs text-gray-500 mt-2'>
-            {volume.stock > 0 ? `${volume.stock} in stock` : 'Out of Stock'}
+      ) : (
+        <div className="text-center py-20 bg-slate-900/50 rounded-3xl border border-slate-800 border-dashed mx-8 lg:mx-40">
+           <p className="text-slate-500 font-medium italic">
+            No featured volumes found in the archives.
           </p>
         </div>
-      </Link>
-
-      {/* 2. Keep the Action Button OUTSIDE the parent Link */}
-      <div className="p-4 pt-0 mt-auto">
-        <Link
-          href={`/checkout?type=volume&id=${volume.volume_id}`}
-          className='flex justify-center items-center w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-500 relative z-10'
-          aria-disabled={volume.stock === 0}
-          onClick={(e) => { 
-            if (volume.stock === 0) e.preventDefault(); 
-            // Optional: prevent the click from bubbling if needed
-            e.stopPropagation(); 
-          }}
-        >
-          <ShoppingCart size={18} className='mr-2' />
-          {volume.stock > 0 ? 'Buy Now' : 'Notify Me'}
-        </Link>
-      </div>
-    </div>
-  ))}
-</div>
-        // === CHANGES FOR HORIZONTAL SCROLLING END HERE ===
-      ) : (
-        <p className="text-center text-gray-400 text-lg">
-          No featured volumes available right now.
-        </p>
       )}
     </div>
   );

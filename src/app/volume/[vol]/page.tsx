@@ -1,19 +1,17 @@
 "use client";
-import { useEffect, useState, useCallback, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation'; // Added useRouter for navigation
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import axios from 'axios';
 import Image from 'next/image';
-// import Link from 'next/link';
-import { ShoppingCart, Package, Trash, Minus, Plus, Loader2 } from 'lucide-react';
+import { ShoppingCart, Package, Minus, Plus, Loader2, ArrowLeft, ShieldCheck, Zap } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../redux/store/store';
 import { addToCartDb, updateCartItemDb, removeFromCartDb, fetchCart } from '../../redux/slices/cartSlice';
 
-// --- Interfaces (Kept as is) ---
 interface VolumeData {
   _id: string;
   manga_id: string;
-  manga_title?: string; // Optional - backend may or may not return this
+  manga_title?: string;
   volume_id: string;
   volume_title: string;
   volume_number: number;
@@ -23,9 +21,8 @@ interface VolumeData {
   stock: number;
 }
 
-// --- Component Start ---
 const VolumeDetailsPage = () => {
-  const router = useRouter(); // Initialize router for navigation
+  const router = useRouter();
   const params = useParams();
   const volumeId = params.vol as string;
 
@@ -33,396 +30,240 @@ const VolumeDetailsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(0);
-  const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
-  const dispatch = useDispatch();
-
-  const cartState = useSelector((state: RootState) => state.cart);
   
-  // 🎯 FIX: Check if cartState is defined (not undefined)
+  const dispatch = useDispatch();
+  const cartState = useSelector((state: RootState) => state.cart);
   const currentCartItems = cartState?.cartItems || [];
-  console.log("Curr quantity:", currentCartItems);
-
-  // Track if cart has been fetched
   const cartFetched = useRef(false);
 
-  // Fetch cart on mount to ensure we have the latest cart data
+  // Initial Cart Fetch
   useEffect(() => {
     if (!cartFetched.current) {
       cartFetched.current = true;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (dispatch as any)(fetchCart());
     }
   }, [dispatch]);
 
-  // const currentCartItems = useSelector((state: RootState) => state.cart.cartItems);
-
   const getQuantityFromCart = useCallback((id: string) => {
-    // Use the Redux cart state to find the item by volume_id
     const existingItem = currentCartItems.find(item => item.volume_id === id);
-    // Returns the existing quantity, or 0 if not found
     return existingItem ? existingItem.quantity : 0;
   }, [currentCartItems]);
 
-  // Sync local quantity state with Redux cart when cart changes
+  // Sync initial local quantity from Redux cart
   useEffect(() => {
     if (volumeData?.volume_id) {
       const cartQty = getQuantityFromCart(volumeData.volume_id);
-      setQuantity(cartQty);
+      if (cartQty > 0) setQuantity(cartQty);
     }
-  }, [currentCartItems, volumeData?.volume_id, getQuantityFromCart]);
+  }, [volumeData?.volume_id, getQuantityFromCart]);
 
   useEffect(() => {
     const fetchVolumeDetails = async () => {
       setIsLoading(true);
-      setError(null);
-
       try {
         if (volumeId) {
-          // You might need to adjust the API endpoint/structure
           const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/volumes/get_volume_details`, {
             volume_id: volumeId,
           });
-          console.log("API called", response.data);
           const data = response.data.data || response.data;
           setVolumeData(data);
-          // Initial quantity will be set by the cart sync useEffect
         }
       } catch (err) {
-        console.error("Error fetching volume details:", err);
-        setError("Failed to load volume details. The server might be unreachable or the ID is invalid.");
+        setError("Failed to load volume details.");
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchVolumeDetails();
   }, [volumeId]);
 
-  // --- Cart and Order Handlers ---
+  // Real-time Database Sync for Quantity
+  const syncQuantityToDb = async (newQty: number) => {
+    if (!volumeData) return;
+    
+    const currentQtyInCart = getQuantityFromCart(volumeData.volume_id);
 
-  // Helper to build the add_item payload
-  const buildAddPayload = (qty: number) => {
-    if (!volumeData) return null;
-    return {
-      volume_id: volumeData.volume_id,
-      manga_title: volumeData.manga_title || volumeData.manga_id, // Use manga_title if available, fallback to manga_id
-      volume_title: volumeData.volume_title,
-      type: "volume" as const,
-      cover_image: volumeData.cover_image,
-      price: volumeData.price,
-      quantity: qty,
-    };
-  };
-
-  // Update quantity in cart via API
-  const handleUpdateQuantity = async (change: number) => {
-    if (!volumeData || !volumeData.volume_id) return;
-
-    const itemId = volumeData.volume_id;
-    const maxStock = volumeData.stock;
-
-    const currentQuantityInCart = getQuantityFromCart(itemId);
-    const newQuantity = currentQuantityInCart + change;
-
-    if (change > 0) {
-      // Handling Increment (Plus Button)
-      if (newQuantity <= maxStock) {
-        if (currentQuantityInCart === 0) {
-          // Item not in cart yet, add it
-          const payload = buildAddPayload(1);
-          if (payload) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await (dispatch as any)(addToCartDb(payload));
-          }
-        } else {
-          // Item exists, update quantity
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await (dispatch as any)(updateCartItemDb({ 
-            volume_id: itemId, 
-            type: "volume",
-            quantity: newQuantity 
-          }));
-        }
-        setQuantity(newQuantity);
-      } else {
-        setMessage({ text: `Maximum stock available is ${maxStock}.`, type: 'error' });
-        setTimeout(() => setMessage(null), 3000);
-      }
-    } else if (change < 0) {
-      // Handling Decrement (Minus Button / Trash)
-      if (currentQuantityInCart > 0) {
-        if (newQuantity <= 0) {
-          // Remove from cart
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await (dispatch as any)(removeFromCartDb({ 
-            volume_id: itemId, 
-            type: "volume" 
-          }));
-          setQuantity(0);
-          setMessage({ text: `Item removed from cart.`, type: 'success' });
-          setTimeout(() => setMessage(null), 3000);
-        } else {
-          // Decrement quantity
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await (dispatch as any)(updateCartItemDb({ 
-            volume_id: itemId, 
-            type: "volume",
-            quantity: newQuantity 
-          }));
-          setQuantity(newQuantity);
-        }
-      }
-    }
-  };
-
-
-  // Remove item from cart completely via API
-  const handleRemoveFromCart = async () => {
-    if (!volumeData || !volumeData.volume_id) return;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (dispatch as any)(removeFromCartDb({ 
-      volume_id: volumeData.volume_id, 
-      type: "volume" 
-    }));
-
-    setQuantity(0);
-    setMessage({ text: `Item removed from cart.`, type: 'success' });
-    setTimeout(() => setMessage(null), 3000);
-  }
-
-
-  // Add to cart via API
-  const handleAddToCart = async () => {
-    if (!volumeData || volumeData.stock === 0) return;
-
-    const itemId = volumeData.volume_id;
-    const currentQuantityInCart = getQuantityFromCart(itemId);
-
-    // Calculate the difference between the local 'quantity' state (the desired quantity) and the cart state
-    const quantityChange = quantity - currentQuantityInCart;
-
-    if (quantityChange > 0) {
-      if (currentQuantityInCart === 0) {
-        // Add new item to cart
-        const payload = buildAddPayload(quantity);
-        if (payload) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await (dispatch as any)(addToCartDb(payload));
-        }
-      } else {
-        // Update existing item quantity
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (dispatch as any)(updateCartItemDb({ 
-          volume_id: itemId, 
-          type: "volume",
-          quantity: quantity 
-        }));
-      }
-      setMessage({ text: `Cart updated: Quantity set to ${quantity}.`, type: 'success' });
-    } else if (quantityChange < 0) {
-      if (quantity === 0) {
-        // Remove from cart
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    try {
+      if (newQty === 0) {
         await (dispatch as any)(removeFromCartDb({ 
-          volume_id: itemId, 
+          volume_id: volumeData.volume_id, 
           type: "volume" 
         }));
-        setMessage({ text: `Item removed from cart.`, type: 'success' });
-      } else {
-        // Update to lower quantity
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (dispatch as any)(updateCartItemDb({ 
-          volume_id: itemId, 
+      } else if (currentQtyInCart === 0) {
+        // Add to cart if it wasn't there
+        await (dispatch as any)(addToCartDb({
+          volume_id: volumeData.volume_id,
+          manga_title: volumeData.manga_title || volumeData.manga_id,
+          volume_title: volumeData.volume_title,
           type: "volume",
-          quantity: quantity 
+          cover_image: volumeData.cover_image,
+          price: volumeData.price,
+          quantity: newQty,
         }));
-        setMessage({ text: `Cart updated: Quantity set to ${quantity}.`, type: 'success' });
+      } else {
+        // Update existing item
+        await (dispatch as any)(updateCartItemDb({
+          volume_id: volumeData.volume_id,
+          type: "volume",
+          quantity: newQty
+        }));
       }
-    } else if (quantityChange === 0 && quantity === 0 && currentQuantityInCart > 0) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (dispatch as any)(removeFromCartDb({ 
-        volume_id: itemId, 
-        type: "volume" 
-      }));
-      setMessage({ text: `Item removed from cart.`, type: 'success' });
-    } else {
-      setMessage({ text: `Cart already up-to-date.`, type: 'success' });
+    } catch (err) {
+      console.error("Failed to sync cart quantity:", err);
     }
-
-    setTimeout(() => setMessage(null), 3000);
   };
 
-  const handleOrderNow = () => {
-    handleAddToCart();
-
-    router.push('/cart');
+  const handleUpdateQuantity = (change: number) => {
+    if (!volumeData) return;
+    const newQty = quantity + change;
+    
+    // Limits: Min 1 (to keep it in cart for buy now), Max Stock
+    if (newQty >= 0 && newQty <= volumeData.stock) {
+      setQuantity(newQty);
+      syncQuantityToDb(newQty);
+    }
   };
 
-  // --- UI Rendering ---
+  const handleBuyNow = () => {
+    if (!volumeData) return;
+    // Redirect to checkout with search params
+    router.push(`/checkout?type=volume&id=${volumeData.volume_id}`);
+  };
+  const handleViewCart = () => {
+    if (!volumeData) return;
+    // Redirect to cart page
+    router.push(`/cart`);
+  };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-[79vh] text-gray-400 text-xl">
-        <Loader2 className="animate-spin mr-3" size={24} />
-        Loading volume details...
-      </div>
-    );
-  }
+  if (isLoading) return (
+    <div className="flex flex-col justify-center items-center h-[80vh] bg-slate-950 text-slate-400">
+      <Loader2 className="animate-spin mb-4 text-indigo-500" size={40} />
+      <p className="animate-pulse font-mono tracking-widest uppercase">Fetching Volume Intel...</p>
+    </div>
+  );
 
-  if (error) {
-    return (
-      <div className="flex justify-center items-center h-[79vh] text-red-500 text-xl">
-        {error}
-      </div>
-    );
-  }
-
-  if (!volumeData) {
-    return (
-      <div className="flex justify-center items-center h-[79vh] text-gray-400 text-xl">
-        Volume not found.
-      </div>
-    );
-  }
-
-  const inStock = volumeData.stock > 0;
-  // Use the Redux state utility:
-  const currentQuantityInCart = getQuantityFromCart(volumeData.volume_id);
-  const inCart = currentQuantityInCart > 0;
-
-  // Primary Button Styles
-  const primaryButtonClass = "flex items-center justify-center px-6 py-3 rounded-xl font-bold transition-all w-full tracking-wider shadow-lg";
-  // Secondary Button Styles (for 'Order Now')
-  const secondaryButtonClass = "flex items-center justify-center px-6 py-3 rounded-xl font-bold transition-all w-full tracking-wider border border-current shadow-md";
+  if (error || !volumeData) return (
+    <div className="h-screen bg-slate-950 flex flex-col items-center justify-center text-white p-6">
+      <p className="text-xl mb-4">{error || "Volume not found."}</p>
+      <button onClick={() => router.back()} className="text-indigo-400 underline">Go Back</button>
+    </div>
+  );
 
   return (
-    <div className="container mx-auto p-4 md:p-8 text-gray-300 min-h-[85vh]">
-      <div className="bg-[#1b2531] rounded-2xl shadow-2xl p-6 md:p-10 relative">
+    <div className="min-h-screen bg-slate-950 text-slate-200 pb-20">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 pt-8">
+        <button onClick={() => router.back()} className="flex items-center gap-2 text-slate-400 hover:text-white transition mb-8 group">
+          <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" /> Back to Collection
+        </button>
 
-        {/* Success/Error Message */}
-        {message && (
-          <div className={`absolute top-4 right-4 z-50 p-4 rounded-lg shadow-xl text-white transition-opacity duration-300 ${message.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
-            {message.text}
-          </div>
-        )}
-
-        {/* Hero Section: Image and Info (Two-Column Layout) */}
-        <div className="flex flex-col md:flex-row gap-8 lg:gap-12">
-
-          {/* Left Column: Image (The hero component) */}
-          <div className="flex-shrink-0 w-full md:w-1/3 max-w-sm mx-auto md:mx-0">
-            <div className="relative w-full aspect-[2/3] rounded-xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
-              <Image
-                src={volumeData.cover_image}
-                alt={`${volumeData.volume_title} Cover`}
-                fill
-                style={{ objectFit: 'cover' }}
-                priority // Preload the main image
-              />
+        <div className="flex flex-col lg:flex-row gap-12 lg:gap-16">
+          {/* LEFT: Cover Art */}
+          <div className="w-full lg:w-[400px] shrink-0">
+            <div className="sticky top-28">
+              <div className="relative aspect-[2/3] rounded-3xl overflow-hidden shadow-2xl shadow-indigo-500/20 border border-slate-800">
+                <Image
+                  src={volumeData.cover_image}
+                  alt={volumeData.volume_title}
+                  fill
+                  className="object-cover"
+                  priority
+                />
+              </div>
+              <div className="mt-6 flex items-center justify-center gap-6 text-slate-500 text-sm">
+                <span className="flex items-center gap-1"><ShieldCheck size={16} className="text-indigo-400" /> Official Edition</span>
+                <span className="flex items-center gap-1"><Zap size={16} className="text-amber-400" /> Express Delivery</span>
+              </div>
             </div>
           </div>
 
-          {/* Right Column: Info, Price, and Actions */}
-          <div className="flex-1 mt-6 md:mt-0">
-
-            {/* Title and Metadata */}
-            <h1 className="text-4xl lg:text-5xl font-extrabold text-white mb-1 leading-tight">
-              {volumeData.volume_title || `Volume #${volumeData.volume_number}`}
-            </h1>
-            <p className="text-xl text-gray-400 mb-6 border-b border-gray-700 pb-4">
-              Volume {volumeData.volume_number}
-            </p>
-
-            {/* Price and Stock Status */}
-            <div className="my-6">
-              <span className="text-4xl font-extrabold text-green-400">
-                Rs. {volumeData.price?.toFixed(2)}
-              </span>
-              <div className={`flex items-center text-lg font-semibold mt-3 ${inStock ? 'text-green-500' : 'text-red-500'}`}>
-                <Package size={18} className='mr-2' />
-                {inStock ? `In Stock (${volumeData.stock} units)` : 'Out of Stock'}
+          {/* RIGHT: Content */}
+          <div className="flex-1">
+            <div className="mb-6">
+              <h1 className="text-4xl md:text-6xl font-black text-white leading-tight mb-2 uppercase italic tracking-tighter">
+                {volumeData.volume_title}
+              </h1>
+              <div className="flex items-center gap-3">
+                <span className="px-3 py-1 bg-indigo-600/20 text-indigo-400 rounded-full text-xs font-bold border border-indigo-500/30">
+                  VOL. {volumeData.volume_number}
+                </span>
+                <span className="text-slate-500">|</span>
+                <span className="text-slate-400 font-medium">{volumeData.manga_title || "Premium Series"}</span>
               </div>
             </div>
 
-            {/* Quantity Selector and Actions Card */}
-            <div className="bg-[#243140] lg:w-3/5 p-6 rounded-xl shadow-inner border border-gray-700">
-              <div className='flex items-center justify-between px-10'>
+            <div className="mb-10">
+               <p className="text-slate-500 uppercase text-xs font-bold tracking-widest mb-1">Price Per Unit</p>
+               <div className="flex items-baseline gap-2">
+                  <span className="text-5xl font-black text-white">₹{volumeData.price}</span>
+                  <span className="text-slate-500 line-through text-xl">₹{volumeData.price + 100}</span>
+               </div>
+            </div>
+
+            {/* Action Card */}
+            <div className="bg-slate-900/50 border border-slate-800 p-8 rounded-3xl backdrop-blur-md mb-10 shadow-xl">
+              <div className="flex flex-wrap items-center justify-between gap-6 mb-8">
                 <div>
-                  <h3 className='text-lg font-semibold mb-4 text-gray-300'>Select Quantity</h3>
-
-                  {inStock && (
-                    <div className="flex items-center space-x-3 mb-8">
-                      {/* Minus Button */}
-                      <button
-                        className={`w-10 h-10 rounded-lg text-white transition-colors duration-200 cursor-pointer ${quantity <= 1 ? 'bg-red-700/50 text-red-300 cursor-default' : 'bg-gray-700 hover:bg-gray-600 cursor-pointer'}`}
-                        onClick={() => handleUpdateQuantity(-1)}
-                        disabled={quantity <= 0}
-                      >
-                        {quantity <= 1 ? <Trash size={16} className='mx-auto' /> : <Minus size={16} className='mx-auto' />}
-                      </button>
-
-                      {/* Quantity Display/Input (Disabled to enforce button use) */}
-                      <input
-                        type="text"
-                        value={quantity}
-                        readOnly
-                        className="w-16 p-2 text-center rounded-lg bg-gray-800 border border-gray-600 text-white font-mono text-xl focus:outline-none"
-                      />
-
-                      {/* Plus Button */}
-                      <button
-                        className={`w-10 h-10 rounded-lg text-white transition-colors duration-200 ${quantity >= volumeData.stock ? 'bg-gray-700/50 text-gray-500 cursor-default' : 'bg-gray-700 hover:bg-gray-600 cursor-pointer'}`}
-                        onClick={() => handleUpdateQuantity(1)}
-                        disabled={quantity >= volumeData.stock}
-                      >
-                        <Plus size={16} className='mx-auto' />
-                      </button>
-                    </div>
-                  )}
+                  <p className="text-slate-400 text-sm font-bold mb-3 uppercase tracking-tighter">Quantity</p>
+                  <div className="flex items-center bg-slate-950 border border-slate-800 rounded-2xl p-1 w-fit shadow-inner">
+                    <button 
+                      onClick={() => handleUpdateQuantity(-1)}
+                      disabled={quantity < 1}
+                      className="p-3 hover:bg-slate-800 rounded-xl transition text-slate-400 hover:text-white disabled:opacity-20 cursor-pointer"
+                    >
+                      <Minus size={18} />
+                    </button>
+                    <span className="w-12 text-center text-xl font-black text-white">{quantity}</span>
+                    <button 
+                      onClick={() => handleUpdateQuantity(1)}
+                      disabled={quantity >= volumeData.stock}
+                      className="p-3 hover:bg-slate-800 rounded-xl transition text-slate-400 hover:text-white disabled:opacity-20 cursor-pointer"
+                    >
+                      <Plus size={18} />
+                    </button>
+                  </div>
                 </div>
 
-                <h2 className='text-2xl font-semibold text-white '>total : ₹{quantity * volumeData.price}</h2>
+                <div className="text-right">
+                  <p className="text-slate-500 text-xs font-bold uppercase mb-1">Subtotal</p>
+                  <p className="text-3xl font-black text-indigo-400">₹{(quantity * volumeData.price).toLocaleString()}</p>
+                </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-col space-y-4">
-                {/* Primary Action: Add to Cart / Update Cart */}
+              {/* Both buttons now trigger Buy Now redirect */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <button
-                  onClick={handleAddToCart}
-                  disabled={!inStock || quantity === 0}
-                  className={`${primaryButtonClass} 
-                          ${inStock && quantity > 0 ? 'bg-blue-600 hover:bg-blue-500 cursor-pointer' : 'bg-gray-600 text-gray-400 cursor-not-allowed'}
-                        `}
+                  onClick={handleBuyNow}
+                  disabled={volumeData.stock === 0}
+                  className="flex items-center justify-center gap-3 py-4 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-2xl border border-slate-700 transition-all disabled:opacity-50 cursor-pointer"
                 >
-                  <ShoppingCart size={20} className='mr-3' />
-                  {inStock
-                    ? (quantity === 0 ? 'Select Quantity' : (inCart ? 'Update Cart' : 'Add to Cart'))
-                    : 'Out of Stock'
-                  }
+                  <Package size={20} />
+                  Purchase Now
                 </button>
-
-                {/* Secondary Action: Order Now (Buy Now) */}
-                {inStock && quantity > 0 && (
-                  <button
-                    onClick={handleOrderNow}
-                    className={`${secondaryButtonClass} bg-transparent text-purple-400 hover:bg-purple-600 hover:text-white cursor-pointer`}
-                  >
-                    <Package size={20} className='mr-3' />
-                    Buy Now
-                  </button>
-                )}
+                <button
+                  onClick={handleViewCart}
+                  disabled={volumeData.stock === 0}
+                  className="flex items-center justify-center gap-3 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl transition-all shadow-lg shadow-indigo-600/30 disabled:opacity-50 cursor-pointer"
+                >
+                  <ShoppingCart size={20} />
+                  view Cart
+                </button>
               </div>
-            </div> {/* End of Actions Card */}
-          </div>
-        </div>
 
-        {/* Description Section (Full Width, below Hero) */}
-        <div className="w-full border-t border-gray-700 mt-8 pt-8">
-          <h3 className="text-3xl font-bold text-white mb-4">Volume Description</h3>
-          <p className="text-gray-400 leading-relaxed text-lg whitespace-pre-wrap">
-            {volumeData.description}
-          </p>
+              {volumeData.stock < 10 && volumeData.stock > 0 && (
+                <p className="text-center text-amber-500 text-xs font-bold mt-4 animate-pulse">
+                  Limited Supply: Only {volumeData.stock} left in stock.
+                </p>
+              )}
+            </div>
+
+            {/* Description Area */}
+            <div className="space-y-4">
+              <h3 className="text-xl font-bold text-white border-l-4 border-indigo-500 pl-4 uppercase tracking-tighter">Volume Summary</h3>
+              <p className="text-slate-400 leading-relaxed text-lg font-medium whitespace-pre-wrap italic">
+                "{volumeData.description}"
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

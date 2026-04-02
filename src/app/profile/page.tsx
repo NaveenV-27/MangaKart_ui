@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   User, Mail, Phone, Activity, 
   ShieldCheck, Edit3, LogOut, Loader2,
-  UserCircle2,
+  UserCircle2, MapPin, Plus, Trash2, RefreshCw
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
@@ -56,24 +56,19 @@ const ProfilePage = () => {
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
   const [addressForm, setAddressForm] = useState<Omit<Address, 'address_id'>>(emptyAddress);
 
-  // --- Mock API Call ---
   useEffect(() => {
     const fetchProfile = async () => {
       setLoading(true);
       try {
         const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/users/get_user_profile`, {}, {
           withCredentials: true,
-        })
-        console.log("Profile data:", response.data);
+        });
         setProfile(response.data.data[0]);
       } catch(error) {
         console.error("Error fetching profile data:", error);
       }
-
-      // setProfile(mockData);
       setLoading(false);
     };
-
     fetchProfile();
   }, []);
 
@@ -88,7 +83,6 @@ const ProfilePage = () => {
       );
 
       if (res.data.apiSuccess === 1) {
-        console.log("Fetch addresses response:", res.data);
         const doc = (res.data.data as any) || {};
         const list: Address[] = Array.isArray(doc.addresses)
           ? doc.addresses
@@ -110,7 +104,6 @@ const ProfilePage = () => {
 
   useEffect(() => {
     fetchAddresses();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const openAddAddress = () => {
@@ -124,10 +117,7 @@ const ProfilePage = () => {
   const openEditAddress = (addr: Address) => {
     setEditingAddressId(addr.address_id);
     const { address_id, ...rest } = addr;
-    setAddressForm({
-      ...emptyAddress,
-      ...rest,
-    });
+    setAddressForm({ ...emptyAddress, ...rest });
     setIsAddrFormOpen(true);
     setAddrError('');
     setAddrMessage('');
@@ -158,33 +148,31 @@ const ProfilePage = () => {
 
     try {
       if (!addressForm.address_line1 || !addressForm.city || !addressForm.state || !addressForm.pincode) {
-        setAddrError('Please fill address_Line 1, City, State, and Pincode.');
+        setAddrError('Please fill Address line 1, City, State, and Pincode.');
+        setAddrLoading(false);
         return;
       }
-  // Map UI state -> backend required keys
-  const payload = {
-    full_name: addressForm.full_name || "",
-    phone_number: (addressForm as any).phone_number || (addressForm as any).phone || "",
-    address_address_line1: (addressForm as any).address_address_line1 || (addressForm as any).address_line1 || "",
-    city: addressForm.city || "",
-    state: addressForm.state || "",
-    postal_code: (addressForm as any).postal_code || (addressForm as any).pincode || "",
-    country: addressForm.country || "",
-  };
 
-  console.log("Payload for address submission:", payload);
+      const payload = {
+        full_name: addressForm.full_name || "",
+        phone_number: addressForm.phone || "",
+        address_line1: addressForm.address_line1 || "",
+        address_line2: addressForm.address_line2 || "",
+        city: addressForm.city || "",
+        state: addressForm.state || "",
+        postal_code: addressForm.pincode || "",
+        country: addressForm.country || "",
+        tag: addressForm.tag || "Home",
+        is_default: addressForm.is_default || false
+      };
 
-  if (editingAddressId) {
+      if (editingAddressId) {
         const res = await axios.post<ApiResponse>(
           `${process.env.NEXT_PUBLIC_BASE_URL}/api/addresses/update_address`,
-          {
-            address_id: editingAddressId,
-    ...payload,
-          },
+          { address_id: editingAddressId, ...payload },
           { withCredentials: true }
         );
         if (res.data.apiSuccess === 1) {
-          console.log("Update address response:", res.data);
           setAddrMessage(res.data.message || 'Address updated');
           closeAddressForm();
           await fetchAddresses();
@@ -198,7 +186,6 @@ const ProfilePage = () => {
           { withCredentials: true }
         );
         if (res.data.apiSuccess === 1) {
-          console.log("Add address response:", res.data);
           setAddrMessage(res.data.message || 'Address added');
           closeAddressForm();
           await fetchAddresses();
@@ -214,9 +201,8 @@ const ProfilePage = () => {
   };
 
   const deleteAddress = async (address_id: string) => {
+    if(!confirm("Remove this address?")) return;
     setAddrLoading(true);
-    setAddrError('');
-    setAddrMessage('');
     try {
       const res = await axios.post<ApiResponse>(
         `${process.env.NEXT_PUBLIC_BASE_URL}/api/addresses/remove_address`,
@@ -224,40 +210,11 @@ const ProfilePage = () => {
         { withCredentials: true }
       );
       if (res.data.apiSuccess === 1) {
-        console.log("Delete address response:", res.data);
         setAddrMessage(res.data.message || 'Address removed');
         await fetchAddresses();
-      } else {
-        setAddrError(res.data.message || 'Failed to remove address');
       }
     } catch (err: any) {
-      setAddrError(err?.response?.data?.message || 'Failed to remove address');
-    } finally {
-      setAddrLoading(false);
-    }
-  };
-
-  const clearAllAddresses = async () => {
-    const ok = confirm('Clear all saved addresses?');
-    if (!ok) return;
-
-    setAddrLoading(true);
-    setAddrError('');
-    setAddrMessage('');
-    try {
-      const res = await axios.post<ApiResponse>(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/api/addresses/clear_addresses`,
-        {},
-        { withCredentials: true }
-      );
-      if (res.data.apiSuccess === 1) {
-        setAddrMessage(res.data.message || 'Addresses cleared');
-        await fetchAddresses();
-      } else {
-        setAddrError(res.data.message || 'Failed to clear addresses');
-      }
-    } catch (err: any) {
-      setAddrError(err?.response?.data?.message || 'Failed to clear addresses');
+      setAddrError('Failed to remove address');
     } finally {
       setAddrLoading(false);
     }
@@ -265,35 +222,33 @@ const ProfilePage = () => {
 
   const logout = async () => {
     try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/users/logout`, {} ,{
+      await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/users/logout`, {}, {
         withCredentials: true,
       });
-      console.log("Logout response:", response.data);
       router.push('/login');
     } catch (error) {
       console.error("Error during logout:", error);
     }
-  }
-
+  };
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
-        <Loader2 className="h-10 w-10 animate-spin text-blue-500 mb-4" />
-        <p className="text-gray-400 animate-pulse">Loading Admin Profile...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white">
+        <Loader2 className="h-10 w-10 animate-spin text-indigo-500 mb-4" />
+        <p className="text-slate-500 font-mono uppercase tracking-[0.2em] animate-pulse text-xs">Syncing Profile...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 p-4 md:p-8 flex justify-center items-center">
-      <div className="max-w-2xl w-full bg-gray-800 rounded-2xl shadow-2xl overflow-hidden border border-gray-700">
+    <div className="min-h-screen bg-slate-950 p-4 md:p-8 flex justify-center items-start">
+      <div className="max-w-3xl w-full bg-slate-900 rounded-[2rem] shadow-2xl overflow-hidden border border-slate-800">
         
-        {/* --- Top Banner & Avatar --- */}
-        <div className="h-32 bg-gradient-to-r from-slate-700 to-gray-800 relative">
-          <div className="absolute -bottom-12 left-8">
-            <div className="h-24 w-24 rounded-2xl bg-gray-700 border-4 border-gray-800 flex items-center justify-center shadow-lg">
-              <UserCircle2 className="h-16 w-16 text-blue-400" />
+        {/* --- Top Banner --- */}
+        <div className="h-40 bg-gradient-to-br from-indigo-900 via-slate-900 to-slate-950 relative">
+          <div className="absolute -bottom-14 left-8">
+            <div className="h-28 w-28 rounded-3xl bg-slate-800 border-4 border-slate-900 flex items-center justify-center shadow-2xl">
+              <UserCircle2 className="h-16 w-16 text-indigo-400" />
             </div>
           </div>
         </div>
@@ -301,289 +256,128 @@ const ProfilePage = () => {
         {/* --- Header Actions --- */}
         <div className="pt-16 px-8 pb-6 flex justify-between items-start">
           <div>
-            <h1 className="text-3xl font-extrabold text-white">{profile.full_name}</h1>
-            <p className="text-blue-400 flex items-center gap-1 mt-1 font-medium">
-              <ShieldCheck className="h-4 w-4" /> Verified mangakart user
+            <h1 className="text-3xl font-black text-white uppercase italic tracking-tighter">{profile.full_name}</h1>
+            <p className="text-indigo-400 flex items-center gap-1.5 mt-1 font-bold text-xs uppercase tracking-widest">
+              <ShieldCheck className="h-4 w-4" /> Verified Citizen
             </p>
           </div>
           <div className="flex gap-2">
-            <button className="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-white transition border border-gray-600">
-              <Edit3 className="h-5 w-5" />
+            <button className="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-white transition border border-slate-700">
+              <Edit3 size={18} />
             </button>
             <button 
               onClick={logout}
-              title='Logout'
-              className="p-2 bg-red-900/20 hover:bg-red-900/40 rounded-lg text-red-400 transition border border-red-900/50 cursor-pointer"
+              className="p-2.5 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white rounded-xl transition border border-rose-500/20"
             >
-              <LogOut className="h-5 w-5" />
+              <LogOut size={18} />
             </button>
           </div>
         </div>
 
-        {/* --- Profile Data Grid --- */}
-        <div className="px-8 pb-8 space-y-6">
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Username */}
-            <div className="space-y-1">
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Username</p>
-              <div className="flex items-center gap-2 text-white bg-gray-700/30 p-3 rounded-lg">
-                <User className="h-4 w-4 text-blue-400" />
-                <span>@{profile.username}</span>
+        <div className="px-8 pb-10 space-y-8">
+          {/* --- Profile Data Grid --- */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-slate-950/50 p-4 rounded-2xl border border-slate-800/50">
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Username</p>
+              <div className="flex items-center gap-2 text-white font-bold">
+                <User size={14} className="text-indigo-500" /> @{profile.username}
               </div>
             </div>
-
-            {/* Email */}
-            <div className="space-y-1">
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Email Address</p>
-              <div className="flex items-center gap-2 text-white bg-gray-700/30 p-3 rounded-lg">
-                <Mail className="h-4 w-4 text-blue-400" />
-                <span className="truncate">{profile.email}</span>
+            <div className="bg-slate-950/50 p-4 rounded-2xl border border-slate-800/50">
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Email</p>
+              <div className="flex items-center gap-2 text-white font-bold truncate">
+                <Mail size={14} className="text-indigo-500" /> {profile.email}
               </div>
             </div>
-
-            {/* Phone */}
-            <div className="space-y-1">
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Phone Number</p>
-              <div className="flex items-center gap-2 text-white bg-gray-700/30 p-3 rounded-lg">
-                <Phone className="h-4 w-4 text-blue-400" />
-                <span>{profile.phone_number || "N/A"}</span>
+            <div className="bg-slate-950/50 p-4 rounded-2xl border border-slate-800/50">
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Phone</p>
+              <div className="flex items-center gap-2 text-white font-bold">
+                <Phone size={14} className="text-indigo-500" /> {profile.phone_number || "Not Linked"}
               </div>
             </div>
-
-            {/* Age & Gender */}
-            <div className="space-y-1">
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Demographics</p>
-              <div className="flex items-center gap-2 text-white bg-gray-700/30 p-3 rounded-lg">
-                <Activity className="h-4 w-4 text-blue-400" />
-                <span className="capitalize">{profile.gender} • {profile.age} yrs</span>
+            <div className="bg-slate-950/50 p-4 rounded-2xl border border-slate-800/50">
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Demographics</p>
+              <div className="flex items-center gap-2 text-white font-bold">
+                <Activity size={14} className="text-indigo-500" /> 
+                <span className="capitalize">{profile.gender} • {profile.age} Yrs</span>
               </div>
             </div>
           </div>
 
           {/* --- Addresses --- */}
-          <div className="mt-2 bg-gray-900/40 border border-gray-700 rounded-xl p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-bold text-white">Saved Addresses</h2>
-                <p className="text-sm text-gray-400">Manage delivery addresses for orders.</p>
-              </div>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-black text-white uppercase italic tracking-tighter">Delivery Intel</h2>
               <div className="flex gap-2">
                 <button
                   onClick={fetchAddresses}
                   disabled={addrLoading}
-                  className="px-3 py-2 text-sm bg-gray-700 hover:bg-gray-600 disabled:bg-gray-700/60 disabled:cursor-not-allowed text-white rounded-lg border border-gray-600"
+                  className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-xl transition border border-slate-700"
                 >
-                  Refresh
+                  <RefreshCw size={16} className={addrLoading ? "animate-spin" : ""} />
                 </button>
                 <button
                   onClick={openAddAddress}
-                  disabled={addrLoading}
-                  className="px-3 py-2 text-sm bg-[#566784] hover:bg-slate-700 disabled:bg-gray-700/60 disabled:cursor-not-allowed text-white rounded-lg border border-gray-600"
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-black uppercase tracking-widest transition flex items-center gap-2"
                 >
-                  Add
+                  <Plus size={14} /> New
                 </button>
               </div>
             </div>
 
-            {addrError && (
-              <div className="mt-3 bg-red-900/30 border border-red-800 text-red-200 px-3 py-2 rounded text-sm">
-                {addrError}
-              </div>
-            )}
-            {addrMessage && (
-              <div className="mt-3 bg-green-900/20 border border-green-800 text-green-200 px-3 py-2 rounded text-sm">
-                {addrMessage}
-              </div>
-            )}
+            {addrError && <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl text-xs font-bold">{addrError}</div>}
+            {addrMessage && <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl text-xs font-bold">{addrMessage}</div>}
 
-            {addrLoading && (
-              <div className="mt-3 text-gray-400 text-sm">Loading...</div>
-            )}
-
-            {!addrLoading && addresses.length === 0 && (
-              <div className="mt-3 text-gray-400 text-sm">No addresses saved yet.</div>
-            )}
-
-            {!addrLoading && addresses.length > 0 && (
-              <div className="mt-3 space-y-3">
-                {addresses.map((a) => (
-                  <div key={a.address_id} className="p-3 rounded-lg border border-gray-700 bg-gray-800/40">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="text-white font-semibold truncate">
-                            {a.full_name || profile?.full_name || 'Address'}
-                          </p>
-                          {a.tag && (
-                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-700 text-gray-200 border border-gray-600">
-                              {a.tag}
-                            </span>
-                          )}
-                          {a.is_default && (
-                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-blue-900/30 text-blue-200 border border-blue-800">
-                              Default
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-gray-300 text-sm mt-1">
-                          {a.address_line1}{a.address_line2 ? `, ${a.address_line2}` : ''}
-                        </p>
-                        <p className="text-gray-400 text-sm">
-                          {a.city}, {a.state} - {a.pincode}{a.country ? `, ${a.country}` : ''}
-                        </p>
-                        {a.phone && (
-                          <p className="text-gray-400 text-sm mt-1">Phone: {a.phone}</p>
-                        )}
+            <div className="grid grid-cols-1 gap-3">
+              {addresses.map((a) => (
+                <div key={a.address_id} className="p-5 rounded-3xl border border-slate-800 bg-slate-950/30 group transition-all hover:border-indigo-500/30">
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-white font-black uppercase text-sm">{a.full_name || profile.full_name}</p>
+                        {a.tag && <span className="text-[9px] px-2 py-0.5 rounded-md bg-indigo-600 text-white font-black uppercase tracking-tighter">{a.tag}</span>}
+                        {a.is_default && <span className="text-[9px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-400 font-black uppercase tracking-tighter border border-slate-700">Default</span>}
                       </div>
-
-                      <div className="flex gap-2 shrink-0">
-                        <button
-                          onClick={() => openEditAddress(a)}
-                          disabled={addrLoading}
-                          className="px-3 py-2 text-sm bg-gray-700 hover:bg-gray-600 disabled:bg-gray-700/60 disabled:cursor-not-allowed text-white rounded-lg border border-gray-600"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => deleteAddress(a.address_id)}
-                          disabled={addrLoading}
-                          className="px-3 py-2 text-sm bg-red-900/20 hover:bg-red-900/40 disabled:bg-gray-700/60 disabled:cursor-not-allowed text-red-300 rounded-lg border border-red-900/50"
-                        >
-                          Remove
-                        </button>
-                      </div>
+                      <p className="text-slate-400 text-sm">{a.address_line1}, {a.city}, {a.state} - {a.pincode}</p>
+                    </div>
+                    <div className="flex gap-1">
+                      <button onClick={() => openEditAddress(a)} className="p-2 text-slate-500 hover:text-white transition"><Edit3 size={16}/></button>
+                      <button onClick={() => deleteAddress(a.address_id)} className="p-2 text-slate-500 hover:text-rose-500 transition"><Trash2 size={16}/></button>
                     </div>
                   </div>
-                ))}
-                <button
-                  onClick={clearAllAddresses}
-                  disabled={addrLoading}
-                  className="w-full mt-2 px-3 py-2 text-sm bg-red-900/20 hover:bg-red-900/40 disabled:bg-gray-700/60 disabled:cursor-not-allowed text-red-300 rounded-lg border border-red-900/50"
-                >
-                  Clear all addresses
-                </button>
-              </div>
-            )}
-
-            {isAddrFormOpen && (
-              <div className="mt-4 p-4 rounded-xl border border-gray-700 bg-gray-900/40">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-white font-bold">
-                    {editingAddressId ? 'Edit Address' : 'Add Address'}
-                  </h3>
-                  <button
-                    onClick={closeAddressForm}
-                    className="text-sm text-gray-300 hover:text-white"
-                    type="button"
-                  >
-                    Close
-                  </button>
                 </div>
+              ))}
+              {addresses.length === 0 && !addrLoading && <p className="text-center py-10 text-slate-600 text-sm font-medium italic border border-dashed border-slate-800 rounded-3xl">No field data found...</p>}
+            </div>
 
-                <form onSubmit={submitAddress} className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <input
-                    className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white"
-                    name="full_name"
-                    placeholder="Full name"
-                    value={addressForm.full_name || ''}
-                    onChange={onAddressFormChange}
-                  />
-                  <input
-                    className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white"
-                    name="phone"
-                    placeholder="Phone"
-                    value={addressForm.phone || ''}
-                    onChange={onAddressFormChange}
-                  />
-
-                  <input
-                    className="md:col-span-2 w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white"
-                    name="address_line1"
-                    placeholder="Address address_line 1*"
-                    value={addressForm.address_line1}
-                    onChange={onAddressFormChange}
-                    required
-                  />
-                  <input
-                    className="md:col-span-2 w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white"
-                    name="address_line2"
-                    placeholder="Address address_line 2"
-                    value={addressForm.address_line2 || ''}
-                    onChange={onAddressFormChange}
-                  />
-
-                  <input
-                    className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white"
-                    name="city"
-                    placeholder="City*"
-                    value={addressForm.city}
-                    onChange={onAddressFormChange}
-                    required
-                  />
-                  <input
-                    className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white"
-                    name="state"
-                    placeholder="State*"
-                    value={addressForm.state}
-                    onChange={onAddressFormChange}
-                    required
-                  />
-
-                  <input
-                    className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white"
-                    name="pincode"
-                    placeholder="Pincode*"
-                    value={addressForm.pincode}
-                    onChange={onAddressFormChange}
-                    required
-                  />
-
-                  <input
-                    className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white"
-                    name="country"
-                    placeholder="Country"
-                    value={addressForm.country || ''}
-                    onChange={onAddressFormChange}
-                  />
-
-                  <select
-                    className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white"
-                    name="tag"
-                    value={addressForm.tag || 'Home'}
-                    onChange={onAddressFormChange}
-                  >
-                    <option value="Home">Home</option>
-                    <option value="Work">Work</option>
-                    <option value="Other">Other</option>
+            {/* --- Address Form --- */}
+            {isAddrFormOpen && (
+              <div className="mt-4 p-6 rounded-3xl border border-indigo-500/30 bg-indigo-500/5 animate-in fade-in slide-in-from-top-2">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-white font-black uppercase text-sm tracking-widest">{editingAddressId ? 'Edit Record' : 'Create Record'}</h3>
+                  <button onClick={closeAddressForm} className="text-slate-500 hover:text-white transition"><XIcon size={18}/></button>
+                </div>
+                <form onSubmit={submitAddress} className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <input className="input-field" name="full_name" placeholder="Contact Person" value={addressForm.full_name} onChange={onAddressFormChange} />
+                  <input className="input-field" name="phone" placeholder="Phone Number" value={addressForm.phone} onChange={onAddressFormChange} />
+                  <input className="input-field md:col-span-2" name="address_line1" placeholder="Address Line 1" value={addressForm.address_line1} onChange={onAddressFormChange} />
+                  <input className="input-field" name="city" placeholder="City" value={addressForm.city} onChange={onAddressFormChange} />
+                  <input className="input-field" name="state" placeholder="State" value={addressForm.state} onChange={onAddressFormChange} />
+                  <input className="input-field" name="pincode" placeholder="Postal Code" value={addressForm.pincode} onChange={onAddressFormChange} />
+                  <select className="input-field" name="tag" value={addressForm.tag} onChange={onAddressFormChange}>
+                    <option value="Home">Home Base</option>
+                    <option value="Work">Office</option>
+                    <option value="Other">External</option>
                   </select>
-
-                  <label className="flex items-center gap-2 text-sm text-gray-300">
-                    <input
-                      type="checkbox"
-                      name="is_default"
-                      checked={!!addressForm.is_default}
-                      onChange={onAddressFormChange}
-                      className="accent-blue-500"
-                    />
-                    Set as default
+                  <label className="md:col-span-2 flex items-center gap-2 text-xs font-bold text-slate-400 cursor-pointer">
+                    <input type="checkbox" name="is_default" checked={addressForm.is_default} onChange={onAddressFormChange} className="accent-indigo-500" />
+                    Set as Primary Destination
                   </label>
-
-                  <div className="md:col-span-2 flex gap-2 mt-1">
-                    <button
-                      type="submit"
-                      disabled={addrLoading}
-                      className="px-4 py-2 bg-[#566784] hover:bg-slate-700 disabled:bg-gray-700/60 disabled:cursor-not-allowed text-white rounded-lg border border-gray-600"
-                    >
-                      {editingAddressId ? 'Save changes' : 'Add address'}
+                  <div className="md:col-span-2 flex gap-3 pt-4">
+                    <button type="submit" disabled={addrLoading} className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-2xl font-black uppercase tracking-widest transition shadow-lg shadow-indigo-600/20">
+                      {addrLoading ? 'Processing...' : 'Save Data'}
                     </button>
-                    <button
-                      type="button"
-                      onClick={closeAddressForm}
-                      className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg border border-gray-600"
-                    >
-                      Cancel
-                    </button>
+                    <button type="button" onClick={closeAddressForm} className="px-6 py-3 bg-slate-800 text-white rounded-2xl font-black uppercase tracking-widest border border-slate-700">Cancel</button>
                   </div>
                 </form>
               </div>
@@ -592,14 +386,37 @@ const ProfilePage = () => {
 
           <button 
             onClick={() => router.push('/')}
-            className="w-full py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-xl transition duration-300"
+            className="w-full py-4 bg-slate-800 hover:bg-slate-700 text-white font-black uppercase tracking-[0.3em] rounded-3xl transition-all border border-slate-700 shadow-xl"
           >
-            Go to Dashboard
+            Return to HQ
           </button>
         </div>
       </div>
+      
+      {/* Internal Style for inputs */}
+      <style jsx>{`
+        .input-field {
+          background: #020617;
+          border: 1px solid #1e293b;
+          border-radius: 1rem;
+          padding: 0.75rem 1rem;
+          color: white;
+          font-size: 0.875rem;
+          outline: none;
+          transition: all 0.2s;
+        }
+        .input-field:focus {
+          border-color: #6366f1;
+          box-shadow: 0 0 0 1px #6366f1;
+        }
+      `}</style>
     </div>
   );
 };
+
+// Helper for close icon
+const XIcon = ({ size }: { size: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+);
 
 export default ProfilePage;
