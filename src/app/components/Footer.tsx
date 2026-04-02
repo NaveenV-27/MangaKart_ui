@@ -3,13 +3,13 @@ import { FaFacebookF, FaInstagram, FaXTwitter, FaGithub, FaLinkedin } from 'reac
 
 const Footer: React.FC = () => {
   return (
-    <footer className="bg-[#0B1623] text-gray-300 py-6 h-[10vh]">
-      <div className="container mx-auto px-12 flex flex-col md:flex-row justify-between items-center">
+    <footer className="bg-[#0B1623] text-gray-300 py-6 md:h-[10vh] h-fit">
+      <div className="container mx-auto px-12 flex flex-col md:flex-row justify-between items-center gap-2">
         <div className='flex-center gap-2'>
             <p className="text-sm">
                 © 2025 MangaKart, Inc. All rights reserved. 
             </p>
-            <p className="text-lg font-serif">
+            <p className="text-lg font-serif hidden md:inline">
                - By NV
             </p>
         </div>

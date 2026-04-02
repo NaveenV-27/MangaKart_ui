@@ -13,8 +13,8 @@ type Address = {
   address_id: string;
   full_name?: string;
   phone?: string;
-  line1: string;
-  line2?: string;
+  address_line1: string;
+  address_line2?: string;
   city: string;
   state: string;
   pincode: string;
@@ -42,8 +42,8 @@ const ProfilePage = () => {
   const emptyAddress: Omit<Address, 'address_id'> = {
     full_name: '',
     phone: '',
-    line1: '',
-    line2: '',
+    address_line1: '',
+    address_line2: '',
     city: '',
     state: '',
     pincode: '',
@@ -82,9 +82,8 @@ const ProfilePage = () => {
     setAddrError('');
     setAddrMessage('');
     try {
-      const res = await axios.post<ApiResponse>(
+      const res = await axios.get<ApiResponse>(
         `${process.env.NEXT_PUBLIC_BASE_URL}/api/addresses/get_addresses`,
-        {},
         { withCredentials: true }
       );
 
@@ -158,15 +157,15 @@ const ProfilePage = () => {
     setAddrMessage('');
 
     try {
-      if (!addressForm.line1 || !addressForm.city || !addressForm.state || !addressForm.pincode) {
-        setAddrError('Please fill Line 1, City, State, and Pincode.');
+      if (!addressForm.address_line1 || !addressForm.city || !addressForm.state || !addressForm.pincode) {
+        setAddrError('Please fill address_Line 1, City, State, and Pincode.');
         return;
       }
   // Map UI state -> backend required keys
   const payload = {
     full_name: addressForm.full_name || "",
     phone_number: (addressForm as any).phone_number || (addressForm as any).phone || "",
-    address_line1: (addressForm as any).address_line1 || (addressForm as any).line1 || "",
+    address_address_line1: (addressForm as any).address_address_line1 || (addressForm as any).address_line1 || "",
     city: addressForm.city || "",
     state: addressForm.state || "",
     postal_code: (addressForm as any).postal_code || (addressForm as any).pincode || "",
@@ -428,7 +427,7 @@ const ProfilePage = () => {
                           )}
                         </div>
                         <p className="text-gray-300 text-sm mt-1">
-                          {a.line1}{a.line2 ? `, ${a.line2}` : ''}
+                          {a.address_line1}{a.address_line2 ? `, ${a.address_line2}` : ''}
                         </p>
                         <p className="text-gray-400 text-sm">
                           {a.city}, {a.state} - {a.pincode}{a.country ? `, ${a.country}` : ''}
@@ -500,17 +499,17 @@ const ProfilePage = () => {
 
                   <input
                     className="md:col-span-2 w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white"
-                    name="line1"
-                    placeholder="Address line 1*"
-                    value={addressForm.line1}
+                    name="address_line1"
+                    placeholder="Address address_line 1*"
+                    value={addressForm.address_line1}
                     onChange={onAddressFormChange}
                     required
                   />
                   <input
                     className="md:col-span-2 w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white"
-                    name="line2"
-                    placeholder="Address line 2"
-                    value={addressForm.line2 || ''}
+                    name="address_line2"
+                    placeholder="Address address_line 2"
+                    value={addressForm.address_line2 || ''}
                     onChange={onAddressFormChange}
                   />
 

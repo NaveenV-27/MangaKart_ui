@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { FaTrash, FaPlus, FaMinus } from 'react-icons/fa';
@@ -25,6 +26,7 @@ const CartPage = () => {
   const loading = cartState?.loading;
   const error = cartState?.error;
   const dispatch = useDispatch();
+  const router = useRouter();
 
   useEffect(() => {
     // Load cart from backend on mount
@@ -81,6 +83,10 @@ const CartPage = () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (dispatch as any)(clearCartDb());
   };
+
+  const handleProceedToCheckout = () => {
+    router.push('/checkout');
+  }
 
   const shipping = subtotal > 0 ? 5.00 : 0;
   const total = subtotal + shipping;
@@ -194,7 +200,9 @@ const CartPage = () => {
               >
                 Clear Cart
               </button>
-              <button className='w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold cursor-pointer'>
+              <button 
+              onClick={handleProceedToCheckout}
+              className='w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold cursor-pointer'>
                 Proceed to Checkout
               </button>
             </div>
