@@ -69,6 +69,7 @@ const Navbar = () => {
         });
         setSearchResults(response.data.results);
       } catch (error) {
+        console.error(error);
         setSearchResults([]);
       } finally {
         setIsSearching(false);

@@ -28,6 +28,7 @@ const RandomVolumes = () => {
         const response = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URL}/api/volumes/get_random_volumes`);
         setVolumeList(response.data.volumes); 
       } catch (err) {
+        console.error(err);
         setError("Failed to load featured volumes.");
       } finally {
         setIsLoading(false);

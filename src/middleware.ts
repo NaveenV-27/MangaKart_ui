@@ -25,7 +25,6 @@ export default function middleware(request: NextRequest) {
     );
   }
 
-  // Restrict admin from accessing receptionist dashboard
   if (
     path.startsWith("/admin") &&
     userIsLoggedIn &&
@@ -33,6 +32,13 @@ export default function middleware(request: NextRequest) {
   ) {
     return NextResponse.redirect(new URL("/", request.nextUrl));
   }
+  if (
+  path === "/" && 
+  !userIsLoggedIn &&
+  adminIsLoggedIn
+) {
+  return NextResponse.redirect(new URL("/admin", request.nextUrl));
+}
 
   // 🔐 If not logged in, block access to protected routes
   if (!isPublicPath && !userIsLoggedIn && !adminIsLoggedIn) {

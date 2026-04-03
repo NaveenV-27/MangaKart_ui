@@ -8,7 +8,7 @@ import {
   FaGithub, 
   FaLinkedin 
 } from 'react-icons/fa6';
-import { Activity, Book, Sparkles } from 'lucide-react';
+import { Activity } from 'lucide-react';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();

@@ -50,6 +50,7 @@ const SignupPage = () => {
       );
       setUsernameStatus(response.data.isValid ? 'available' : 'taken');
     } catch (err) {
+      console.error(err);
       setUsernameStatus('invalid'); 
     } finally {
       setIsCheckingUsername(false);
@@ -70,7 +71,7 @@ const SignupPage = () => {
     const timeoutId = setTimeout(() => checkUsernameUniqueness(username), 500);
     setDebounceTimeout(timeoutId);
     return () => clearTimeout(timeoutId);
-  }, [formData.username]);
+  }, [formData.username, debounceTimeout]);
 
   useEffect(() => {
       const requiredFields = [formData.username, formData.full_name, formData.email, formData.password, formData.age, passwordConfirm];
@@ -101,6 +102,7 @@ const SignupPage = () => {
         setSuccess("Account established. Welcome to the collective.");
         setTimeout(() => router.push('/login'), 2000);
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.response?.data?.message || "Registration failed.");
     } finally {

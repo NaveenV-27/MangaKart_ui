@@ -15,8 +15,7 @@ import {
   Phone, 
   Calendar, 
   CreditCard,
-  ExternalLink,
-  Loader2
+  ExternalLink
 } from "lucide-react";
 import Link from "next/link";
 

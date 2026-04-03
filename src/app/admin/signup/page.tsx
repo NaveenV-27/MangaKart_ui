@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -29,7 +29,7 @@ const SignupPage = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  // const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
   const [allowSignup, setAllowSignup] = useState(false);
@@ -45,7 +45,7 @@ const SignupPage = () => {
     return /^[a-zA-Z0-9_-]{4,20}$/.test(username);
   };
   
-  const checkUsernameUniqueness = async (username: string) => {
+  const checkUsernameUniqueness = useCallback(async (username: string) => {
     setIsCheckingUsername(true);
     try {
       const response = await axios.post(
@@ -54,11 +54,12 @@ const SignupPage = () => {
       );
       setUsernameStatus(response.data.isValid ? 'available' : 'taken');
     } catch (err) {
+      console.error(err);
       setUsernameStatus('invalid'); 
     } finally {
       setIsCheckingUsername(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const username = formData.username.trim();
@@ -74,7 +75,7 @@ const SignupPage = () => {
     const timeoutId = setTimeout(() => checkUsernameUniqueness(username), 500);
     setDebounceTimeout(timeoutId);
     return () => clearTimeout(timeoutId);
-  }, [formData.username]);
+  }, [formData.username, debounceTimeout, checkUsernameUniqueness]);
 
   useEffect(() => {
       const requiredFields = [formData.username, formData.full_name, formData.email, formData.password, formData.age, passwordConfirm];
@@ -106,6 +107,7 @@ const SignupPage = () => {
           message: response.data.admin_id
         });
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.response?.data?.message || "Registration failed.");
     } finally {

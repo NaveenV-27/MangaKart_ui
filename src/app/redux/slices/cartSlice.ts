@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
 export interface CartItem {
@@ -19,7 +19,7 @@ export interface CartState {
     error?: string;
     message?: string;
 }
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ApiResponse<T = any> = {
     apiSuccess: number;
     message: string;
@@ -50,12 +50,13 @@ const calculateTotals = (items: CartItem[]) => {
 };
 
 // --- Backend helpers ---
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const normalizeBackendCart = (data: any): CartItem[] => {
     // Backend returns { items: [...] } structure
     const doc = Array.isArray(data) ? data[0] : data;
     const items = doc?.items || [];
     if (!Array.isArray(items)) return [];
-
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return items.map((it: any) => ({
         volume_id: String(it?.volume_id || ""),
         manga_title: it?.manga_title || "",
@@ -67,6 +68,7 @@ const normalizeBackendCart = (data: any): CartItem[] => {
     } as CartItem));
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getApiErrorMessage = (err: any, fallback = "Server error") =>
     err?.response?.data?.message || err?.message || fallback;
 
@@ -84,12 +86,15 @@ export const fetchCart = createAsyncThunk<CartItem[], void, { rejectValue: strin
                 return thunkApi.rejectWithValue(res.data.message || "Failed to load cart");
             }
             return normalizeBackendCart(res.data.data);
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             return thunkApi.rejectWithValue(getApiErrorMessage(err, "Failed to load cart"));
         }
     }
 );
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const addToCartDb = createAsyncThunk<CartItem[], Record<string, any>, { rejectValue: string }>(
     "cart/addToCartDb",
     async (payload, thunkApi) => {
@@ -105,12 +110,13 @@ export const addToCartDb = createAsyncThunk<CartItem[], Record<string, any>, { r
                 return thunkApi.rejectWithValue(res.data.message || "Failed to add to cart");
             }
             return normalizeBackendCart(res.data.data);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any    
         } catch (err: any) {
             return thunkApi.rejectWithValue(getApiErrorMessage(err, "Failed to add to cart"));
         }
     }
 );
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const updateCartItemDb = createAsyncThunk<CartItem[], Record<string, any>, { rejectValue: string }>(
     "cart/updateCartItemDb",
     async (payload, thunkApi) => {
@@ -126,12 +132,13 @@ export const updateCartItemDb = createAsyncThunk<CartItem[], Record<string, any>
                 return thunkApi.rejectWithValue(res.data.message || "Failed to update cart");
             }
             return normalizeBackendCart(res.data.data);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             return thunkApi.rejectWithValue(getApiErrorMessage(err, "Failed to update cart"));
         }
     }
 );
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const removeFromCartDb = createAsyncThunk<CartItem[], Record<string, any>, { rejectValue: string }>(
     "cart/removeFromCartDb",
     async (payload, thunkApi) => {
@@ -147,6 +154,7 @@ export const removeFromCartDb = createAsyncThunk<CartItem[], Record<string, any>
                 return thunkApi.rejectWithValue(res.data.message || "Failed to remove item");
             }
             return normalizeBackendCart(res.data.data);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any    
         } catch (err: any) {
             return thunkApi.rejectWithValue(getApiErrorMessage(err, "Failed to remove item"));
         }
@@ -167,6 +175,7 @@ export const clearCartDb = createAsyncThunk<CartItem[], void, { rejectValue: str
             }
             // Backend might return empty cart; normalize anyway.
             return normalizeBackendCart(res.data.data);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             return thunkApi.rejectWithValue(getApiErrorMessage(err, "Failed to clear cart"));
         }

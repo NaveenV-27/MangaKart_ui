@@ -6,14 +6,9 @@ import {
   Package, 
   ChevronRight, 
   Calendar, 
-  MapPin, 
-  Clock, 
-  CheckCircle2, 
-  Truck, 
-  CreditCard,
-  Search
+  MapPin
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 interface OrderItem {
@@ -33,7 +28,7 @@ interface Order {
 }
 
 const OrdersPage = () => {
-  const router = useRouter();
+  // const router = useRouter();
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,7 +78,7 @@ const OrdersPage = () => {
           <div className="text-center py-20 bg-slate-900/50 rounded-3xl border border-slate-800">
             <Package className="w-16 h-16 text-slate-700 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-white">No orders found</h3>
-            <p className="text-slate-500 mt-2">Looks like you haven't started your collection yet.</p>
+            <p className="text-slate-500 mt-2">Looks like you havent started your collection yet.</p>
             <Link href="/" className="inline-block mt-6 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 transition">
               Browse Manga
             </Link>

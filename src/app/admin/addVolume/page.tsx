@@ -2,9 +2,21 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { IoSearch } from 'react-icons/io5';
-import { X } from 'lucide-react';
+import { 
+  X, 
+  Layers, 
+  Upload, 
+  Link as LinkIcon, 
+  Hash, 
+  Type, 
+  IndianRupee, 
+  Box, 
+  Loader2, 
+  CheckCircle2,
+  AlertCircle
+} from 'lucide-react';
 
 interface MangaTitle {
   _id: string;
@@ -25,42 +37,39 @@ const AddVolume = () => {
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
   const [coverImageUrl, setCoverImageUrl] = useState('');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [message, setMessage] = useState('');
+  
+  const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
 
-  // Debounced search effect
   useEffect(() => {
-    if (!mangaQuery) {
+    if (!mangaQuery || selectedManga) {
       setMangaResults([]);
       return;
     }
 
     setIsSearching(true);
-    
     const delayDebounceFn = setTimeout(async () => {
       try {
         const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/manga/search_manga`, {
           search: mangaQuery,
-        }, {
-          withCredentials: true
-        });
-        // Correctly handle the response format
-        // console.log("Manga search response:", response.data);
-        setMangaResults(response.data.results.map((m: {manga_id : string; title: string;}) => ({ _id: m.manga_id, title: m.title })));
+        }, { withCredentials: true });
+        
+        setMangaResults(response.data.results.map((m: {manga_id: string, title: string}) => (
+          { _id: m.manga_id, title: m.title }
+        )));
       } catch (error) {
-        console.error("Error searching manga titles:", error);
+        console.error(error)
         setMangaResults([]);
       } finally {
         setIsSearching(false);
       }
-    }, 500); // 500ms delay
+    }, 500);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [mangaQuery]);
+  }, [mangaQuery, selectedManga]);
 
   const handleMangaSelect = (manga: MangaTitle) => {
-    console.log("Selected manga:", manga);
     setSelectedManga(manga);
     setMangaQuery(manga.title);
     setMangaResults([]);
@@ -72,37 +81,21 @@ const AddVolume = () => {
       const file = e.target.files[0];
       setCoverImageFile(file);
       setPreviewUrl(URL.createObjectURL(file));
-      setCoverImageUrl(''); // Clear URL field if file is selected
-    } else {
-      setCoverImageFile(null);
-      setPreviewUrl(null);
+      setCoverImageUrl('');
     }
   };
 
   const onFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setMessage('');
+    setMessage(null);
 
     if (!selectedManga || !volumeNumber || !price || (!coverImageFile && !coverImageUrl)) {
-      setMessage("Please fill out all required fields.");
+      setMessage({ text: "Please provide all mandatory intel.", type: 'error' });
       setIsLoading(false);
       return;
     }
 
-    // const formData = new FormData();
-    // formData.append('manga_id', selectedManga._id);
-    // formData.append('volume_number', volumeNumber);
-    // formData.append('title', volumeTitle);
-    // formData.append('description', description);
-    // formData.append('price', price);
-    // formData.append('stock', stock);
-
-    // if (coverImageFile) {
-    //   formData.append('cover_image', coverImageFile);
-    // } else if (coverImageUrl) {
-    //   formData.append('cover_image_url', coverImageUrl);
-    // }
     const payload = {
       manga_id: selectedManga._id,
       volume_number: volumeNumber,
@@ -114,19 +107,11 @@ const AddVolume = () => {
     };
 
     try {
-      console.log("FormData:", payload);
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/api/volumes/create_volume`, 
-        payload,
-        {
-          // headers: {
-          //   'Content-Type': 'multipart/form-data',
-          // }, 
-          withCredentials: true
-        }
-      );
-      setMessage(`Volume ${volumeNumber} added successfully to ${selectedManga.title}!`);
-      // Reset form fields
+      await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/volumes/create_volume`, payload, { withCredentials: true });
+      
+      setMessage({ text: `Volume ${volumeNumber} deployed to ${selectedManga.title} archive.`, type: 'success' });
+      
+      // Reset form
       setSelectedManga(null);
       setVolumeNumber('');
       setVolumeTitle('');
@@ -137,182 +122,192 @@ const AddVolume = () => {
       setCoverImageUrl('');
       setPreviewUrl(null);
       setMangaQuery('');
-      console.log("Response from API:", response.data);
-      setTimeout(()=> {
-        setMessage("");
-      }, 5000)
+      
+      setTimeout(() => setMessage(null), 5000);
     } catch (error) {
-      console.error('Add volume error:', error);
-      setMessage('Failed to add volume. Please try again.');
+      console.error(error);
+      setMessage({ text: "Operation failed. Server denied entry.", type: 'error' });
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-[79vh] bg-gray-900 flex items-center justify-center p-6 w-full">
-      <form onSubmit={onFormSubmit} className="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-lg text-gray-200">
-        <h2 className="text-3xl font-semibold mb-6 text-white text-center">
-          Add Volume
-        </h2>
-
-        {/* Manga Search */}
-        <div className="mb-4 relative">
-          <label className="block mb-2">
-            <span className="text-gray-400">Select Manga</span>
-            <div className="relative">
-              <input
-                type="text"
-                value={selectedManga ? selectedManga.title : mangaQuery}
-                onChange={(e) => {
-                  setMangaQuery(e.target.value);
-                  setShowResults(true);
-                  setSelectedManga(null);
-                }}
-                className="mt-1 block w-full p-2 pr-10 rounded bg-gray-700 border border-gray-600 text-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Search for a manga..."
-                required
-              />
-              <IoSearch className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-400' size={20} />
-            </div>
-          </label>
-          
-          {isSearching && mangaQuery.length > 0 && (
-            <div className="absolute top-full left-0 mt-1 w-full max-w-lg p-3 rounded-md shadow-lg bg-gray-800 text-gray-400 text-sm">
-                Searching...
-            </div>
-          )}
-          {showResults && mangaResults.length > 0 && (
-            <div className="absolute z-10 w-full max-w-lg bg-gray-700 rounded-md shadow-lg mt-1 max-h-60 overflow-y-auto">
-              {mangaResults.map((manga) => (
-                <div
-                  key={manga._id}
-                  onClick={() => handleMangaSelect(manga)}
-                  className="p-3 cursor-pointer hover:bg-gray-600 transition-colors"
-                >
-                  {manga.title}
-                </div>
-              ))}
-            </div>
-          )}
-          {selectedManga && (
-            <p className="mt-2 text-sm text-blue-400">
-              Selected: <span className="font-semibold">{selectedManga.title}</span>
-            </p>
-          )}
-        </div>
-
-        {/* Volume Number & Title */}
-        <div className="flex gap-4 mb-4">
-          <label className="block flex-1">
-            <span className="text-gray-400">Volume Number</span>
-            <input
-              type="number"
-              value={volumeNumber}
-              onChange={(e) => setVolumeNumber(e.target.value)}
-              className="mt-1 block w-full p-2 rounded bg-gray-700 border border-gray-600 text-gray-300 focus:ring-blue-500 focus:border-blue-500"
-              required
-              min="1"
-            />
-          </label>
-          <label className="block flex-1">
-            <span className="text-gray-400">Volume Title (Optional)</span>
-            <input
-              type="text"
-              value={volumeTitle}
-              onChange={(e) => setVolumeTitle(e.target.value)}
-              className="mt-1 block w-full p-2 rounded bg-gray-700 border border-gray-600 text-gray-300 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="e.g., The Journey Begins"
-            />
-          </label>
-        </div>
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 w-full">
+      <div className="w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-[2.5rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-500">
         
-        {/* Description */}
-        <label className="block mb-4">
-          <span className="text-gray-400">Description</span>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={4}
-            className="mt-1 block w-full p-2 rounded bg-gray-700 border border-gray-600 text-gray-300 focus:ring-blue-500 focus:border-blue-500 resize-none"
-            placeholder="Enter a description for the volume..."
-          />
-        </label>
+        <header className="bg-slate-900 border-b border-slate-800 p-8 text-center">
+          <div className="inline-flex p-3 bg-indigo-600/10 rounded-2xl mb-4">
+            <Layers className="w-8 h-8 text-indigo-500" />
+          </div>
+          <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter">Add New Volume</h2>
+          <p className="text-slate-500 text-sm font-bold uppercase tracking-widest mt-2">Link a volume to an existing series</p>
+        </header>
 
-        {/* Price & Stock */}
-        <div className="flex gap-4 mb-4">
-          <label className="block flex-1">
-            <span className="text-gray-400">Price (₹)</span>
-            <input
-              type="number"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              step="0.01"
-              className="mt-1 block w-full p-2 rounded bg-gray-700 border border-gray-600 text-gray-300 focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
-          </label>
-          <label className="block flex-1">
-            <span className="text-gray-400">Stock</span>
-            <input
-              type="number"
-              value={stock}
-              onChange={(e) => setStock(e.target.value)}
-              min="0"
-              className="mt-1 block w-full p-2 rounded bg-gray-700 border border-gray-600 text-gray-300 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </label>
-        </div>
+        <form onSubmit={onFormSubmit} className="p-8 md:p-10 grid grid-cols-1 md:grid-cols-2 gap-8">
+          
+          {/* Left Column: Association & Meta */}
+          <div className="space-y-6">
+            <div className="relative">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 mb-2 flex items-center gap-2">
+                <IoSearch size={12} /> Target Manga Series
+              </label>
+              <div className="relative group">
+                <input
+                  type="text"
+                  value={mangaQuery}
+                  onChange={(e) => {
+                    setMangaQuery(e.target.value);
+                    setShowResults(true);
+                    if (selectedManga) setSelectedManga(null);
+                  }}
+                  className={`volume-input pl-4 pr-10 ${selectedManga ? 'border-emerald-500/50' : ''}`}
+                  placeholder="Search series title..."
+                  required
+                />
+                {isSearching ? (
+                  <Loader2 className='absolute right-3 top-1/2 -translate-y-1/2 text-indigo-500 animate-spin' size={18} />
+                ) : (
+                  <IoSearch className='absolute right-3 top-1/2 -translate-y-1/2 text-slate-500' size={18} />
+                )}
+              </div>
 
-        {/* Cover Image Upload */}
-        <div className="mb-6">
-          <label className="block mb-2">
-            <span className="text-gray-400">Cover Image File</span>
-            <input
-              type="file"
-              name='cover_image'
-              accept="image/*"
-              onChange={handleFileChange}
-              className="mt-1 block w-full text-gray-300 bg-gray-700 rounded border border-gray-600 focus:ring-blue-500 focus:border-blue-500 cursor-pointer"
-            />
-          </label>
-          {previewUrl && (
-            <div className="mt-2 w-48 h-auto overflow-hidden rounded-lg">
-              <img src={previewUrl} alt="Cover Preview" className="w-full h-full object-cover"/>
+              {/* Search Results Dropdown */}
+              {showResults && mangaResults.length > 0 && (
+                <div className="absolute z-50 w-full bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl mt-2 max-h-52 overflow-y-auto custom-scrollbar">
+                  {mangaResults.map((manga) => (
+                    <div
+                      key={manga._id}
+                      onClick={() => handleMangaSelect(manga)}
+                      className="p-4 cursor-pointer hover:bg-indigo-600/10 hover:text-indigo-400 transition-all border-b border-slate-800 last:border-0 text-sm font-bold"
+                    >
+                      {manga.title}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-          <p className="text-center text-gray-500 my-2">-- OR --</p>
-          <label className="block">
-            <span className="text-gray-400">Cover Image URL</span>
-            <input
-              type="text"
-              name="cover_image_url"
-              value={coverImageUrl}
-              onChange={(e) => {
-                setCoverImageUrl(e.target.value);
-                setCoverImageFile(null); // Clear file input
-                setPreviewUrl(null); // Clear preview
-              }}
-              className="mt-1 block w-full p-2 rounded bg-gray-700 border border-gray-600 text-gray-300 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter image URL"
-            />
-          </label>
-        </div>
 
-        <button
-          type="submit"
-          disabled={isLoading || !selectedManga || isSearching}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded transition duration-300 disabled:bg-gray-500 cursor-pointer disabled:cursor-not-allowed"
-        >
-          {isLoading ? 'Adding Volume...' : 'Add Volume'}
-        </button>
-      </form>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                  <Hash size={12} /> Vol Number
+                </label>
+                <input type="number" value={volumeNumber} onChange={(e) => setVolumeNumber(e.target.value)} className="volume-input" placeholder="01" required min="1" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                  <Type size={12} /> Vol Title
+                </label>
+                <input type="text" value={volumeTitle} onChange={(e) => setVolumeTitle(e.target.value)} className="volume-input" placeholder="Sub-title" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                  <IndianRupee size={12} /> Price
+                </label>
+                <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} className="volume-input" placeholder="₹" required step="0.01" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                  <Box size={12} /> Stock
+                </label>
+                <input type="number" value={stock} onChange={(e) => setStock(e.target.value)} className="volume-input" placeholder="Units" min="0" />
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Imagery & Desc */}
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                <Upload size={12} /> Volume Cover
+              </label>
+              <div className="flex gap-4 items-start">
+                <div className="relative group w-24 h-36 rounded-xl border-2 border-dashed border-slate-800 bg-slate-950 flex flex-col items-center justify-center overflow-hidden transition-all hover:border-indigo-500/50 shrink-0">
+                  {previewUrl ? (
+                    <Image src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <Upload className="w-6 h-6 text-slate-700" />
+                  )}
+                  <input type="file" accept="image/*" onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer" />
+                </div>
+                <div className="flex-1 space-y-3">
+                  <div className="relative">
+                    <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" size={14} />
+                    <input
+                      type="text"
+                      value={coverImageUrl}
+                      onChange={(e) => {
+                        setCoverImageUrl(e.target.value);
+                        setCoverImageFile(null);
+                        setPreviewUrl(null);
+                      }}
+                      className="volume-input pl-9 text-xs"
+                      placeholder="Asset URL fallback"
+                    />
+                  </div>
+                  <p className="text-[9px] text-slate-600 font-bold uppercase leading-relaxed tracking-tighter">
+                    Upload a physical file or provide a secure cloud link.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Volume Summary</label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={4}
+                className="volume-input min-h-[114px] py-3 resize-none"
+                placeholder="Details specific to this release..."
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading || !selectedManga || isSearching}
+            className="md:col-span-2 w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-widest py-4 rounded-2xl transition-all shadow-xl shadow-indigo-600/20 disabled:bg-slate-800 disabled:text-slate-600 disabled:shadow-none flex items-center justify-center gap-2"
+          >
+            {isLoading ? <><Loader2 className="animate-spin" size={20} /> Deploying Volume...</> : 'Add Volume to Library'}
+          </button>
+        </form>
+      </div>
+
+      {/* Modern Toast Notification */}
       {message && (
-        <div className="fixed flex items-center gap-2 top-40 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded shadow-lg bg-green-600 text-white font-semibold">
-          {message}
-          <button className='cursor-pointer' onClick={() => setMessage("")}><X/></button>
+        <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 text-white font-bold animate-in slide-in-from-bottom-10 duration-300 ${message.type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'}`}>
+          {message.type === 'success' ? <CheckCircle2 size={20} /> : <AlertCircle size={20} />}
+          {message.text}
+          <button onClick={() => setMessage(null)} className='ml-2 opacity-50 hover:opacity-100 transition-opacity'><X size={18}/></button>
         </div>
       )}
+
+      <style jsx>{`
+        .volume-input {
+          width: 100%;
+          padding: 0.75rem 1rem;
+          border-radius: 1rem;
+          background-color: #020617; /* slate-950 */
+          border: 1px solid #1e293b; /* slate-800 */
+          color: white;
+          font-size: 0.875rem;
+          font-weight: 500;
+          outline: none;
+          transition: all 0.2s;
+        }
+        .volume-input:focus {
+          border-color: #6366f1; /* indigo-500 */
+          box-shadow: 0 0 0 1px #6366f1;
+        }
+        .volume-input::placeholder {
+          color: #475569; /* slate-600 */
+        }
+      `}</style>
     </div>
   );
 };

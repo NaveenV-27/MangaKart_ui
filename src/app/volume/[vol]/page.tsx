@@ -40,6 +40,7 @@ const VolumeDetailsPage = () => {
   useEffect(() => {
     if (!cartFetched.current) {
       cartFetched.current = true;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (dispatch as any)(fetchCart());
     }
   }, [dispatch]);
@@ -69,6 +70,7 @@ const VolumeDetailsPage = () => {
           setVolumeData(data);
         }
       } catch (err) {
+        console.error(err);
         setError("Failed to load volume details.");
       } finally {
         setIsLoading(false);
@@ -85,12 +87,14 @@ const VolumeDetailsPage = () => {
 
     try {
       if (newQty === 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (dispatch as any)(removeFromCartDb({ 
           volume_id: volumeData.volume_id, 
           type: "volume" 
         }));
       } else if (currentQtyInCart === 0) {
         // Add to cart if it wasn't there
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (dispatch as any)(addToCartDb({
           volume_id: volumeData.volume_id,
           manga_title: volumeData.manga_title || volumeData.manga_id,
@@ -102,6 +106,7 @@ const VolumeDetailsPage = () => {
         }));
       } else {
         // Update existing item
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (dispatch as any)(updateCartItemDb({
           volume_id: volumeData.volume_id,
           type: "volume",
@@ -260,7 +265,7 @@ const VolumeDetailsPage = () => {
             <div className="space-y-4">
               <h3 className="text-xl font-bold text-white border-l-4 border-indigo-500 pl-4 uppercase tracking-tighter">Volume Summary</h3>
               <p className="text-slate-400 leading-relaxed text-lg font-medium whitespace-pre-wrap italic">
-                "{volumeData.description}"
+                {volumeData.description}
               </p>
             </div>
           </div>

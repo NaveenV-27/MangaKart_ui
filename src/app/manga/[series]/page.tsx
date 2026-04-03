@@ -1,28 +1,29 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import axios from 'axios';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Star, ShoppingCart, Loader2, BookOpen, Layers, ChevronLeft, Info, Calendar } from 'lucide-react';
-import { useDispatch } from 'react-redux';
-import { addToCartDb } from '../../redux/slices/cartSlice';
-import { AppDispatch } from '../../redux/store/store';
+import { Star, ShoppingCart, Loader2, BookOpen, Layers, Info } from 'lucide-react';
+// import { useDispatch } from 'react-redux';
+// import { addToCartDb } from '../../redux/slices/cartSlice';
+// import { AppDispatch } from '../../redux/store/store';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 
 const SeriesPage = () => {
   const params = useParams();
-  const router = useRouter();
-  const dispatch = useDispatch<AppDispatch>();
-  
+  // const router = useRouter();
+  // const dispatch = useDispatch<AppDispatch>();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [mangaData, setMangaData] = useState<any | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [volumes, setVolumes] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [volumesLoading, setVolumesLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [addingToCart, setAddingToCart] = useState<string | null>(null);
+  // const [volumesLoading, setVolumesLoading] = useState(false);
+  // const [error, setError] = useState<string | null>(null);
+  // const [addingToCart, setAddingToCart] = useState<string | null>(null);
 
   const mangaName: string = typeof params.series === "string" ? params.series.replace(/-/g, " ") : "";
 
@@ -37,7 +38,8 @@ const SeriesPage = () => {
           setMangaData(response.data);
         }
       } catch (err) {
-        setError("Archives unreachable.");
+        console.error(err);
+        // setError("Archives unreachable.");
       } finally {
         setIsLoading(false);
       }
@@ -48,7 +50,7 @@ const SeriesPage = () => {
   useEffect(() => {
     const fetchVolumes = async () => {
       if (!mangaData?.manga_id) return;
-      setVolumesLoading(true);
+      // setVolumesLoading(true);
       try {
         const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/volumes/get_volumes_by_manga`, {
           manga_id: mangaData.manga_id,
@@ -56,7 +58,9 @@ const SeriesPage = () => {
         if (response.data.success === 1) {
           setVolumes(response.data.volumes || []);
         }
-      } catch (err) { console.error(err); } finally { setVolumesLoading(false); }
+      } catch (err) { console.error(err); } finally { 
+        // setVolumesLoading(false);
+      }
     };
     fetchVolumes();
   }, [mangaData?.manga_id]);
@@ -125,7 +129,7 @@ const SeriesPage = () => {
               <h2 className="text-xl font-black text-white uppercase tracking-tight italic">Story Brief</h2>
             </div>
             <p className="text-slate-400 leading-relaxed text-lg italic whitespace-pre-wrap">
-              "{mangaData.description}"
+              {mangaData.description}
             </p>
             
             <div className="flex flex-wrap gap-2 mt-10">

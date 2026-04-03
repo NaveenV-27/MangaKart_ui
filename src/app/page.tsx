@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Carousel from "./components/Carousel";
 import MangaList from "./components/MangaList";
 import RandomVolumes from "./components/RandomVolumes";
-import { Loader2 } from "lucide-react";
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState<boolean>(true);

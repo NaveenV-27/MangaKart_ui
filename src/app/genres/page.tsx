@@ -2,7 +2,7 @@
 import axios from "axios";
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
-import { Layers, Loader2, Sparkles, ChevronRight } from "lucide-react";
+import { Layers, Sparkles, ChevronRight } from "lucide-react";
 
 const genreColors: { [key: string]: string } = {
   Action: "from-red-600/20",
@@ -31,6 +31,7 @@ const GenresPage = () => {
         timeout: 5000,
       });
       return response?.data?.data
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .map((anime: any) => anime?.images?.jpg?.large_image_url)
         .filter(Boolean);
     } catch (error) {

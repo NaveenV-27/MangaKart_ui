@@ -22,7 +22,7 @@ const SearchHandler = () => {
 
     const [rawResults, setRawResults] = useState<MangaResult[]>([])
     const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
+    // const [error, setError] = useState<string | null>(null)
 
     // --- Filter States ---
     const [selectedGenres, setSelectedGenres] = useState<string[]>([])
@@ -50,7 +50,7 @@ const SearchHandler = () => {
         const fetchResults = async () => {
             if (!query) return
             setLoading(true)
-            setError(null)
+            // setError(null)
             try {
                 const response = await axios.post(`${baseUrl}/api/manga/search_manga`, {
                     search: query,
@@ -59,7 +59,8 @@ const SearchHandler = () => {
                 console.log("response:", response.data)
                 setRawResults(response.data.results || [])
             } catch (err) {
-                setError("Failed to retrieve search data.")
+                console.error(err);
+                // setError("Failed to retrieve search data.")
             } finally {
                 setLoading(false)
             }

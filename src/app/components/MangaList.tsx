@@ -45,6 +45,7 @@ const MangaList = () => {
         }, { withCredentials: true });
         setMangaList(response.data);
       } catch (err) {
+        console.error(err);
         setError("Failed to load popular series.");
       } finally {
         setIsLoading(false);

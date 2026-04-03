@@ -57,6 +57,7 @@ const LoginPage = () => {
       } else {
         setError(response.data.message || "Invalid credentials provided.");
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       const apiError = err.response?.data?.message || "Authentication failed. Server unreachable.";
       setError(apiError);

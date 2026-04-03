@@ -68,7 +68,7 @@ const MangaPage = () => {
 
   useEffect(() => {
     fetchManga(true);
-  }, [selectedGenres, sortBy]);
+  }, [selectedGenres, sortBy, fetchManga]);
 
   const handleLoadMore = () => {
     setPage(prev => prev + 1);
@@ -78,7 +78,7 @@ const MangaPage = () => {
     if (page > 1) {
       fetchManga(false);
     }
-  }, [page]);
+  }, [page, fetchManga]);
 
   const handleClearFilters = () => {
     setSelectedGenres([]);

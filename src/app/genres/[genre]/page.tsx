@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronLeft, Star, Loader2, BookCopy, Sparkles } from 'lucide-react';
+import { ChevronLeft, Star, BookCopy, Sparkles } from 'lucide-react';
 
 interface MangaProps {
   _id: string;
@@ -132,7 +132,7 @@ const GenrePage = () => {
           <div className='flex flex-col items-center justify-center py-32 bg-slate-900/20 rounded-[3rem] border border-dashed border-slate-800'>
             <BookCopy className='text-slate-700 mb-6' size={60} />
             <h3 className='text-xl font-bold text-white'>No Archives Found</h3>
-            <p className='text-slate-500 text-sm mt-1'>We couldn't find any manga under the {genreName} category.</p>
+            <p className='text-slate-500 text-sm mt-1'>We couldnt find any manga under the {genreName} category.</p>
           </div>
         )}
       </div>

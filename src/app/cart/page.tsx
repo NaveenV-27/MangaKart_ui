@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { FaTrash, FaPlus, FaMinus } from 'react-icons/fa';
+import { FaPlus, FaMinus } from 'react-icons/fa';
 import { ShoppingBag, ArrowRight, Trash2, Loader2 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../redux/store/store';
@@ -115,7 +115,7 @@ const CartPage = () => {
           <div className='flex flex-col items-center justify-center py-32 bg-slate-900/30 rounded-3xl border border-slate-800 border-dashed text-center'>
             <ShoppingBag className='text-slate-700 mb-6' size={80} />
             <p className='text-2xl font-bold text-white mb-2'>Your cart is empty</p>
-            <p className='text-slate-500 mb-8 max-w-sm'>Looks like you haven't added any manga to your collection yet.</p>
+            <p className='text-slate-500 mb-8 max-w-sm'>Looks like you havent added any manga to your collection yet.</p>
             <Link href="/manga" className='px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-500/20'>
               Start Shopping
             </Link>

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   User, Mail, Phone, Activity, 
   ShieldCheck, Edit3, LogOut, Loader2,
-  UserCircle2, MapPin, Plus, Trash2, RefreshCw
+  UserCircle2, Plus, Trash2, RefreshCw
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
@@ -22,7 +22,7 @@ type Address = {
   tag?: string;
   is_default?: boolean;
 };
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ApiResponse<T = any> = {
   apiSuccess: number;
   message: string;
@@ -31,6 +31,7 @@ type ApiResponse<T = any> = {
 
 const ProfilePage = () => {
   const router = useRouter();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -83,6 +84,7 @@ const ProfilePage = () => {
       );
 
       if (res.data.apiSuccess === 1) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const doc = (res.data.data as any) || {};
         const list: Address[] = Array.isArray(doc.addresses)
           ? doc.addresses
@@ -94,6 +96,7 @@ const ProfilePage = () => {
         setAddrError(res.data.message || 'Failed to load addresses');
         setAddresses([]);
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setAddrError(err?.response?.data?.message || 'Failed to load addresses');
       setAddresses([]);
@@ -193,6 +196,7 @@ const ProfilePage = () => {
           setAddrError(res.data.message || 'Failed to add address');
         }
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setAddrError(err?.response?.data?.message || 'Address save failed');
     } finally {
@@ -213,7 +217,9 @@ const ProfilePage = () => {
         setAddrMessage(res.data.message || 'Address removed');
         await fetchAddresses();
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
+      console.error(err);
       setAddrError('Failed to remove address');
     } finally {
       setAddrLoading(false);

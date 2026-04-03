@@ -1,6 +1,19 @@
 "use client";
 import axios from 'axios';
 import React, { useState } from 'react';
+import { 
+  BookPlus, 
+  Upload, 
+  Link as LinkIcon, 
+  User, 
+  Star, 
+  Type, 
+  Hash, 
+  Loader2, 
+  CheckCircle2,
+  XCircle
+} from 'lucide-react';
+import Image from 'next/image';
 
 interface MangaData {
   title: string;
@@ -22,19 +35,16 @@ const UploadMangaDataForm: React.FC = () => {
     coverImageFile: null,
     coverImageUrl: '',
   };
+
   const [formData, setFormData] = useState<MangaData>(initialFormData);
   const [previewUrl, setPreviewUrl] = useState<string>("");
-  const [message, setMessage] = useState('');
-  
-  
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
 
     if (name === 'authors' || name === 'genres') {
-      // Split by comma for authors and genres
       setFormData((prev) => ({
         ...prev,
         [name]: value.split(',').map((v) => v.trim()),
@@ -59,20 +69,17 @@ const UploadMangaDataForm: React.FC = () => {
         ...prev,
         coverImageFile: file,
       }));
-      if (file) {
-        const url = URL.createObjectURL(file);
-        setPreviewUrl(url);
-        console.log(url)
-      } else {
-        setPreviewUrl("");
-      }
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
     }
   };
 
   const onFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const data = new FormData();
+    setIsLoading(true);
+    setMessage(null);
 
+    const data = new FormData();
     data.append('title', formData.title);
     data.append('description', formData.description);
     data.append('authors', JSON.stringify(formData.authors));
@@ -84,145 +91,162 @@ const UploadMangaDataForm: React.FC = () => {
     } else {
       data.append('cover_image_url', formData.coverImageUrl);
     }
-    console.log("Submitting form with data:", data);
+
     try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/manga/create_manga`, data, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/manga/create_manga`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
         withCredentials: true
       });
-      console.log("Response:", response.data, response.data.data.cover_image);
-      setMessage(`Upload successful! URL: ${response.data.data.cover_image}`);
+      
+      setMessage({ text: "Intel deployed successfully. Series created.", type: 'success' });
       setFormData(initialFormData);
       setPreviewUrl("");
+      setTimeout(() => setMessage(null), 5000);
     } catch (error) {
-      console.error('Upload error:', error);
+      setMessage({ text: "Deployment failed. Check system logs.", type: 'error' });
+      console.error(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-6 w-full">
-      <form
-        onSubmit={onFormSubmit}
-        className="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-lg text-gray-200"
-      >
-        <h2 className="text-3xl font-semibold mb-6 text-white text-center">
-          Upload Manga Data
-        </h2>
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 w-full">
+      <div className="w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-[2.5rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-500">
+        
+        <header className="bg-slate-900 border-b border-slate-800 p-8 text-center">
+          <div className="inline-flex p-3 bg-indigo-600/10 rounded-2xl mb-4">
+            <BookPlus className="w-8 h-8 text-indigo-500" />
+          </div>
+          <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter">Initialize Series</h2>
+          <p className="text-slate-500 text-sm font-bold uppercase tracking-widest mt-2">Add a new manga to the archives</p>
+        </header>
 
-        <label className="block mb-4">
-          <span className="text-gray-400">Cover Image File</span>
-          {previewUrl && (
-            <img
-              src={previewUrl}
-              alt="Preview"
-              style={{ width: '200px', marginTop: '12px', borderRadius: '8px' }}
+        <form onSubmit={onFormSubmit} className="p-8 md:p-10 grid grid-cols-1 md:grid-cols-2 gap-8">
+          
+          {/* Left Column: Visual Data */}
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                <Upload size={12} /> Cover Asset
+              </label>
+              <div className="relative group aspect-[2/3] w-full max-w-[240px] mx-auto rounded-3xl border-2 border-dashed border-slate-800 bg-slate-950 flex flex-col items-center justify-center overflow-hidden transition-all hover:border-indigo-500/50">
+                {previewUrl ? (
+                  <Image src={previewUrl} alt="Preview" fill className="object-cover" />
+                ) : (
+                  <div className="text-center p-6">
+                    <Upload className="w-10 h-10 text-slate-700 mx-auto mb-2" />
+                    <p className="text-xs text-slate-600 font-bold uppercase">Upload File</p>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  name='cover_image'
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                <LinkIcon size={12} /> External Asset URL
+              </label>
+              <input
+                type="text"
+                name="coverImageUrl"
+                value={formData.coverImageUrl}
+                onChange={handleChange}
+                placeholder="https://asset-cloud.com/image.jpg"
+                className="upload-input"
+              />
+            </div>
+          </div>
+
+          {/* Right Column: Metadata */}
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                <Type size={12} /> Series Title
+              </label>
+              <input type="text" name="title" value={formData.title} onChange={handleChange} placeholder="One Piece" className="upload-input" required />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                <Star size={12} /> Rating (0.0 - 10.0)
+              </label>
+              <input type="number" name="rating" step="0.1" min="0" max="10" value={formData.rating} onChange={handleChange} placeholder="9.8" className="upload-input" />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                <User size={12} /> Authors (CSV)
+              </label>
+              <input type="text" name="authors" value={formData.authors.join(', ')} onChange={handleChange} placeholder="Eiichiro Oda, Tite Kubo" className="upload-input" />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                <Hash size={12} /> Genres (CSV)
+              </label>
+              <input type="text" name="genres" value={formData.genres.join(', ')} onChange={handleChange} placeholder="Action, Adventure, Shonen" className="upload-input" />
+            </div>
+          </div>
+
+          {/* Bottom Row: Description */}
+          <div className="md:col-span-2 space-y-2">
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Series Synopsis</label>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              placeholder="Enter the primary series narrative..."
+              rows={4}
+              className="upload-input min-h-[120px] py-3 resize-none"
             />
-          )}
-          <input
-            type="file"
-            name='cover_image'
-            accept="image/*"
-            onChange={handleFileChange}
-            className="mt-1 block w-full text-gray-300 bg-gray-700 rounded border border-gray-600 focus:ring-blue-500 focus:border-blue-500 "
-          />
-        </label>
+          </div>
 
-        <label className="block mb-4">
-          <span className="text-gray-400">Or Cover Image URL</span>
-          <input
-            type="text"
-            name="coverImageUrl"
-            value={formData.coverImageUrl}
-            onChange={handleChange}
-            placeholder="Image URL"
-            className="mt-1 block w-full p-2 rounded bg-gray-700 border border-gray-600 text-gray-300 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </label>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="md:col-span-2 w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-widest py-4 rounded-2xl transition-all shadow-xl shadow-indigo-600/20 disabled:bg-slate-800 disabled:text-slate-600 disabled:shadow-none flex items-center justify-center gap-2"
+          >
+            {isLoading ? <><Loader2 className="animate-spin" size={20} /> Processing Intelligence...</> : 'Deploy Series'}
+          </button>
+        </form>
+      </div>
 
-        <label className="block mb-4">
-          <span className="text-gray-400">Title</span>
-          <input
-            type="text"
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            placeholder="Title"
-            className="mt-1 block w-full p-2 rounded bg-gray-700 border border-gray-600 text-gray-300 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </label>
+      {/* Dynamic Toast Notification */}
+      {message && (
+        <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 text-white font-bold animate-in slide-in-from-bottom-10 ${message.type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'}`}>
+          {message.type === 'success' ? <CheckCircle2 size={20} /> : <XCircle size={20} />}
+          {message.text}
+        </div>
+      )}
 
-        <label className="block mb-4">
-          <span className="text-gray-400">Description</span>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            placeholder="Description"
-            rows={4}
-            className="mt-1 block w-full p-2 rounded bg-gray-700 border border-gray-600 text-gray-300 focus:ring-blue-500 focus:border-blue-500 resize-none"
-          />
-        </label>
-
-        <label className="block mb-4">
-          <span className="text-gray-400">Authors (comma separated)</span>
-          <input
-            type="text"
-            name="authors"
-            value={formData.authors.join(', ')}
-            onChange={handleChange}
-            placeholder="Authors"
-            className="mt-1 block w-full p-2 rounded bg-gray-700 border border-gray-600 text-gray-300 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </label>
-
-        <label className="block mb-4">
-          <span className="text-gray-400">Genres (comma separated)</span>
-          <input
-            type="text"
-            name="genres"
-            value={formData.genres.join(', ')}
-            onChange={handleChange}
-            placeholder="Genres"
-            className="mt-1 block w-full p-2 rounded bg-gray-700 border border-gray-600 text-gray-300 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </label>
-
-        <label className="block mb-6">
-          <span className="text-gray-400">Rating</span>
-          <input
-            type="number"
-            name="rating"
-            step="0.1"
-            min="0"
-            max="10"
-            value={formData.rating}
-            onChange={handleChange}
-            placeholder="Rating"
-            className="mt-1 block w-full p-2 rounded bg-gray-700 border border-gray-600 text-gray-300 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </label>
-
-        <button
-          type="submit"
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded transition duration-300"
-        >
-          Upload
-        </button>
-      </form>
-      <div
-      className={`
-        fixed top-40 left-1/2 transform -translate-x-1/2 
-        z-50 px-6 py-3 rounded shadow-lg 
-        bg-green-600 text-white font-semibold 
-        transition-opacity duration-500 
-        ${message ? 'opacity-100 animate-fadeInDown' : 'opacity-0 pointer-events-none'}
-      `}
-      role="alert"
-    >
-      {message}
-    </div>
+      <style jsx>{`
+        .upload-input {
+          width: 100%;
+          padding: 0.75rem 1rem;
+          border-radius: 1rem;
+          background-color: #020617; /* slate-950 */
+          border: 1px solid #1e293b; /* slate-800 */
+          color: white;
+          font-size: 0.875rem;
+          font-weight: 500;
+          outline: none;
+          transition: all 0.2s;
+        }
+        .upload-input:focus {
+          border-color: #6366f1; /* indigo-500 */
+          box-shadow: 0 0 0 1px #6366f1;
+        }
+        .upload-input::placeholder {
+          color: #475569; /* slate-600 */
+        }
+      `}</style>
     </div>
   );
 };

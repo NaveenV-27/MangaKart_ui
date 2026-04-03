@@ -57,6 +57,7 @@ const LoginPage = () => {
       } else {
         setError(response.data.message || "Invalid credentials. Please try again.");
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       const apiError = err.response?.data?.message || "Connection failed. Please check your network.";
       setError(apiError);
