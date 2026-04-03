@@ -4,12 +4,12 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { User, Lock, Eye, EyeOff, UserCheck2 } from 'lucide-react';
+import { User, Lock, Eye, EyeOff, UserCheck2, Loader2, ShieldAlert, Sparkles } from 'lucide-react';
 
 const LoginPage = () => {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    usernameOrEmail: '', // Field for user to enter either username or email
+    usernameOrEmail: '',
     password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -17,22 +17,20 @@ const LoginPage = () => {
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // --- Input Change Handler ---
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
-    setError(''); // Clear error on input change
+    setError('');
   };
 
-  // --- Form Submission Handler ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.usernameOrEmail || !formData.password) {
-      setError("Please enter your username/email and password.");
+      setError("Please provide your identification and access key.");
       return;
     }
 
@@ -41,122 +39,142 @@ const LoginPage = () => {
     setSuccess('');
 
     try {
-      
       const payload = {
-        identifier: formData.usernameOrEmail, // Send field as 'identifier'
+        identifier: formData.usernameOrEmail,
         password: formData.password,
       };
 
       const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/users/login`,
         payload,
-        {
-          withCredentials: true
-        }
+        { withCredentials: true }
       );
 
-      if(response.data.apiSuccess === 1) {
-        // Assuming successful login returns a token or user object
-        console.log("Login successful:", response.data);
-        setSuccess("Login successful! Redirecting to dashboard...");
+      if (response.data.apiSuccess === 1) {
+        setSuccess("Authentication successful! Entering MangaKart...");
         setTimeout(() => {
           router.push('/'); 
         }, 1500);
       } else {
-        setError(response.data.message || "Invalid cridentials");
+        setError(response.data.message || "Invalid credentials. Please try again.");
       }
-      
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      const apiError = err.response?.data?.message || "Invalid credentials or server error.";
+      const apiError = err.response?.data?.message || "Connection failed. Please check your network.";
       setError(apiError);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // --- Render ---
-
   return (
-    <div className="flex-center h-screen bg-gray-900 p-4">
-      <div className="bg-gray-800 p-8 md:p-10 rounded-xl shadow-2xl w-full max-w-sm text-gray-300">
-        <h1 className="text-4xl font-extrabold text-white text-center mb-2 flex-center gap-2">
-          <UserCheck2 className=' w-8 h-8 self-baseline-last'/>
-          Log In
-        </h1>
-        <p className="text-gray-400 text-center mb-8">
-          Welcome back to MangaKart!
-        </p>
+    <div className="flex items-center justify-center min-h-screen bg-slate-950 p-6 relative">
+      {/* Background Decor */}
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-30" />
+      
+      <div className="bg-slate-900 border border-slate-800 p-8 md:p-12 rounded-[2.5rem] shadow-2xl w-full max-w-md animate-in fade-in zoom-in-95 duration-500">
+        
+        <header className="text-center mb-10">
+          <div className="inline-flex p-3 bg-indigo-600/10 rounded-2xl mb-4">
+            <Sparkles className="w-8 h-8 text-indigo-500" />
+          </div>
+          <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter">Login</h1>
+          <p className="text-slate-500 text-sm font-bold uppercase tracking-widest mt-2">Welcome back to MangaKart</p>
+        </header>
 
         {/* --- Feedback Messages --- */}
         {error && (
-          <div className="bg-red-900 border border-red-700 text-red-300 p-3 rounded mb-4 text-sm">
+          <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-4 rounded-2xl mb-6 text-sm font-bold flex items-center gap-3">
+            <ShieldAlert size={18} />
             {error}
           </div>
         )}
+        
         {success && (
-          <div className="bg-green-900 border border-green-700 text-green-300 p-3 rounded mb-4 text-sm">
+          <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-4 rounded-2xl mb-6 text-sm font-bold flex items-center gap-3">
+            <UserCheck2 size={18} />
             {success}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           
           {/* Username or Email */}
-          <div className="relative">
-            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" />
+          <div className="relative group">
+            <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 group-focus-within:text-indigo-500 transition-colors" />
             <input
               type="text"
               name="usernameOrEmail"
               value={formData.usernameOrEmail}
               onChange={handleChange}
               placeholder="Username or Email"
-              className="w-full pl-10 pr-4 py-3 rounded-lg bg-gray-700 border border-gray-600 focus:ring-blue-500 focus:border-blue-500 text-white placeholder-gray-400"
+              className="login-input pl-12"
               required
             />
           </div>
 
-          {/* Password (Toggle Visibility) */}
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" />
+          {/* Password */}
+          <div className="relative group">
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 group-focus-within:text-indigo-500 transition-colors" />
             <input
               type={showPassword ? 'text' : 'password'}
               name="password"
               value={formData.password}
               onChange={handleChange}
               placeholder="Password"
-              className="w-full pl-10 pr-10 py-3 rounded-lg bg-gray-700 border border-gray-600 focus:ring-blue-500 focus:border-blue-500 text-white placeholder-gray-400"
+              className="login-input pl-12 pr-12"
               required
             />
             <button
               type="button"
-              onClick={() => setShowPassword(prev => !prev)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
               aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
-              {showPassword ? <EyeOff className='h-5 w-5' /> : <Eye className='h-5 w-5' />}
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
           
-          {/* <p className="text-right text-sm text-blue-400 hover:text-blue-300 cursor-pointer">
-            Forgot Password?
-          </p> */}
-
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 mt-4 bg-[#566784] text-white font-semibold rounded-lg hover:bg-slate-700 transition duration-300 disabled:bg-gray-500 disabled:cursor-not-allowed cursor-pointer"
+            className="w-full py-4 mt-6 bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-widest rounded-2xl transition-all shadow-xl shadow-indigo-600/20 disabled:bg-slate-800 disabled:text-slate-600 disabled:shadow-none disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {isLoading ? 'Logging In...' : 'Log In'}
+            {isLoading ? (
+              <>
+                <Loader2 className="animate-spin h-5 w-5" />
+                Authenticating...
+              </>
+            ) : (
+              'Enter Archives'
+            )}
           </button>
         </form>
 
-        <p className="text-sm text-center text-gray-400 mt-6">
-          Dont have an account? 
-          <Link href="/signup" className="text-blue-400 hover:text-blue-300 font-medium ml-1">
-            Sign Up
-          </Link>
+        <p className="text-xs text-center text-slate-500 mt-8 font-bold uppercase tracking-widest">
+          New to the collective? <Link href="/signup" className="text-indigo-400 hover:text-indigo-300 ml-1 underline decoration-2 underline-offset-4">Join Now</Link>
         </p>
       </div>
+
+      <style jsx>{`
+        .login-input {
+          width: 100%;
+          padding-top: 0.875rem;
+          padding-bottom: 0.875rem;
+          border-radius: 1.25rem;
+          background-color: #020617; /* slate-950 */
+          border: 1px solid #1e293b; /* slate-800 */
+          color: white;
+          font-weight: 500;
+          outline: none;
+          transition: all 0.2s;
+        }
+        .login-input:focus {
+          border-color: #6366f1; /* indigo-500 */
+          box-shadow: 0 0 0 1px #6366f1;
+        }
+        .login-input::placeholder {
+          color: #475569; /* slate-600 */
+        }
+      `}</style>
     </div>
   );
 };
