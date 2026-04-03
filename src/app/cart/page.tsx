@@ -22,6 +22,7 @@ const CartPage = () => {
 
   const cartState = useSelector((state: RootState) => state.cart);
   const cartItems = cartState?.cartItems || [];
+  // console.log("Cart State:", cartItems); // Debugging log
   const subtotal = cartState?.totalAmount || 0;
   const loading = cartState?.loading;
   const error = cartState?.error;

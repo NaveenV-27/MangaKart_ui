@@ -27,7 +27,7 @@ type Address = {
   is_default?: boolean;
 };
 
-const CheckoutPage = () => {
+const CheckoutContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useDispatch();
@@ -66,6 +66,7 @@ const CheckoutPage = () => {
   const subtotal = isSingleCheckout && singleItem ? (singleItem.price * singleItem.quantity) : cartSubtotal;
   const shipping = subtotal > 0 ? 40.00 : 0;
   const total = subtotal + shipping;
+  // console.log("Checkout Items:", checkoutItems);
   
   const fetchAddresses = useCallback(async () => {
     try {
@@ -152,13 +153,14 @@ const CheckoutPage = () => {
   const handlePlaceOrder = async () => {
     if (!selectedAddress) return alert("Please select an address");
     setPlacingOrder(true);
+    // console.log("items", checkoutItems);
     const payload = {
       items: checkoutItems.map(item => ({
         volume_id: item.volume_id,
         quantity: item.quantity,
         price: item.price,
         volume_title: item.volume_title,
-        seller_id: item.created_by
+        seller_id: item.seller_id
       })),
       shipping_name: selectedAddress.full_name,
       shipping_phone: selectedAddress.phone_number,
@@ -168,6 +170,7 @@ const CheckoutPage = () => {
       shipping_state: selectedAddress.state,
       total_amount: total
     };
+    // console.log("Order Payload:", payload);
 
     try {
       const res = await axios.post(`${baseUrl}/api/orders/create_order`, payload, { withCredentials: true });
@@ -189,7 +192,7 @@ const CheckoutPage = () => {
           <div className="bg-slate-900 border border-slate-800 p-8 rounded-[2.5rem] max-w-lg w-full shadow-2xl animate-in zoom-in-95 duration-300">
             <div className="flex justify-between items-center mb-8">
                <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">New Delivery HQ</h2>
-               <button onClick={() => setShowAddForm(false)} className="text-slate-500 hover:text-white transition-colors"><X /></button>
+               <button onClick={() => setShowAddForm(false)} className="text-slate-500 hover:text-white transition-colors cursor-pointer"><X /></button>
             </div>
             
             <form onSubmit={handleAddAddress} className="space-y-4">
@@ -226,14 +229,14 @@ const CheckoutPage = () => {
                       key={t}
                       type="button"
                       onClick={() => setNewAddr({...newAddr, tag: t})}
-                      className={`flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-widest border transition-all ${newAddr.tag === t ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-500'}`}
+                      className={`cursor-pointer flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-widest border transition-all ${newAddr.tag === t ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-500'}`}
                     >
                       {t}
                     </button>
                   ))}
                </div>
 
-               <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-4 rounded-2xl font-black uppercase tracking-widest mt-6 shadow-lg shadow-indigo-600/20 transition-all">
+               <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-4 rounded-2xl font-black uppercase tracking-widest mt-6 shadow-lg shadow-indigo-600/20 transition-all cursor-pointer">
                   Initialize Address
                </button>
             </form>
@@ -250,7 +253,7 @@ const CheckoutPage = () => {
             </div>
             <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter mb-2">Deployed!</h2>
             <p className="text-slate-400 text-sm font-medium mb-8">Intelligence suggests your manga is being prepared for transit.</p>
-            <button onClick={() => router.push(`/orders/${orderId}`)} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-4 rounded-2xl font-black uppercase tracking-widest transition flex items-center justify-center gap-2 group">
+            <button onClick={() => router.push(`/orders/${orderId}`)} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-4 rounded-2xl font-black uppercase tracking-widest transition flex items-center justify-center gap-2 group cursor-pointer">
               Track Order <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
@@ -259,7 +262,7 @@ const CheckoutPage = () => {
 
       <div className="max-w-6xl mx-auto">
         <header className="flex items-center gap-4 mb-12">
-          <button onClick={() => router.back()} className="p-3 bg-slate-900 border border-slate-800 rounded-2xl hover:text-indigo-400 transition-colors">
+          <button onClick={() => router.back()} className="p-3 bg-slate-900 border border-slate-800 rounded-2xl hover:text-indigo-400 transition-colors cursor-pointer">
             <ChevronLeft size={20} />
           </button>
           <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter flex items-center gap-4">
@@ -279,7 +282,7 @@ const CheckoutPage = () => {
                 <h2 className="text-xl font-black text-white uppercase italic tracking-tight">Delivery Intel</h2>
                 <button 
                   onClick={() => setShowAddForm(true)} 
-                  className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400 hover:text-indigo-300 transition-colors"
+                  className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer"
                 >
                   <Plus size={14} /> Add Station
                 </button>
@@ -358,7 +361,7 @@ const CheckoutPage = () => {
               <button
                 onClick={handlePlaceOrder}
                 disabled={placingOrder || !selectedAddress || checkoutItems.length === 0}
-                className="w-full mt-8 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 text-white py-5 rounded-2xl font-black uppercase tracking-widest transition-all shadow-xl shadow-indigo-600/20 flex items-center justify-center gap-3 group"
+                className="w-full mt-8 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 text-white py-5 rounded-2xl font-black uppercase tracking-widest transition-all shadow-xl shadow-indigo-600/20 flex items-center justify-center gap-3 group cursor-pointer"
               >
                 {placingOrder ? <Loader2 className="animate-spin" /> : <>Finalize Order <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" /></>}
               </button>
@@ -386,6 +389,18 @@ const CheckoutPage = () => {
         }
       `}</style>
     </div>
+  );
+};
+
+const CheckoutPage = () => {
+  return (
+    <React.Suspense fallback={
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <Loader2 className="animate-spin text-indigo-500" size={48} />
+      </div>
+    }>
+      <CheckoutContent />
+    </React.Suspense>
   );
 };
 

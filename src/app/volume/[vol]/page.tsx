@@ -19,6 +19,7 @@ interface VolumeData {
   cover_image: string;
   price: number;
   stock: number;
+  created_by: string;
 }
 
 const VolumeDetailsPage = () => {
@@ -67,6 +68,7 @@ const VolumeDetailsPage = () => {
             volume_id: volumeId,
           });
           const data = response.data.data || response.data;
+          console.log("Fetched Volume Data:", data); // Debug log
           setVolumeData(data);
         }
       } catch (err) {
@@ -84,6 +86,7 @@ const VolumeDetailsPage = () => {
     if (!volumeData) return;
     
     const currentQtyInCart = getQuantityFromCart(volumeData.volume_id);
+    console.log("Volume Data:", volumeData);
 
     try {
       if (newQty === 0) {
@@ -94,6 +97,17 @@ const VolumeDetailsPage = () => {
         }));
       } else if (currentQtyInCart === 0) {
         // Add to cart if it wasn't there
+        const payload = {
+          volume_id: volumeData.volume_id,
+          manga_title: volumeData.manga_title || volumeData.manga_id,
+          volume_title: volumeData.volume_title,
+          type: "volume",
+          cover_image: volumeData.cover_image,
+          price: volumeData.price,
+          quantity: newQty,
+          seller_id: volumeData.created_by
+        }
+        console.log("payload:", payload);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (dispatch as any)(addToCartDb({
           volume_id: volumeData.volume_id,
@@ -103,6 +117,7 @@ const VolumeDetailsPage = () => {
           cover_image: volumeData.cover_image,
           price: volumeData.price,
           quantity: newQty,
+          seller_id: volumeData.created_by
         }));
       } else {
         // Update existing item

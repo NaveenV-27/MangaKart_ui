@@ -9,6 +9,7 @@ export interface CartItem {
     cover_image: string;
     price: number;
     quantity: number;
+    seller_id: string;
 }
 
 export interface CartState {
@@ -65,6 +66,7 @@ const normalizeBackendCart = (data: any): CartItem[] => {
         cover_image: it?.cover_image || "",
         price: Number(it?.price ?? 0),
         quantity: Number(it?.quantity ?? 1),
+        seller_id: String(it?.seller_id || ""),
     } as CartItem));
 };
 
@@ -101,6 +103,7 @@ export const addToCartDb = createAsyncThunk<CartItem[], Record<string, any>, { r
         try {
             // Backend endpoint: /api/cart/add_item
             // Send the entire payload as req.body - backend handles it
+            console.log("Adding to cart with payload:", payload); // Debug log
             const res = await axios.post<ApiResponse>(
                 `${process.env.NEXT_PUBLIC_BASE_URL}/api/cart/add_item`,
                 payload,
